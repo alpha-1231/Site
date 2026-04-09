@@ -1,0 +1,682 @@
+================================================================================
+ABOUTMYSCHOOL.COM — COMPLETE SITE DESCRIPTION
+Nepal's Most Comprehensive Educational Institution Directory
+================================================================================
+
+
+OVERVIEW
+--------
+
+AboutMySchool is Nepal's dedicated online educational directory, built to
+bridge the information gap between students, parents, and educational
+institutions across the country. Whether you are a student looking for the
+right college, a parent researching school options for your child, or an
+educator exploring affiliated institutions, AboutMySchool is the single
+platform where every educational institution in Nepal can be discovered,
+explored, and evaluated — all in one place.
+
+The platform serves as a free, publicly accessible resource that aggregates
+detailed, accurate, and up-to-date profiles of schools, colleges, universities,
+training institutes, and other educational bodies operating throughout Nepal.
+From the hills of Pokhara to the plains of the Terai, and from the busy streets
+of Kathmandu to remote districts, AboutMySchool aims to put every institution
+on the digital map.
+
+
+WHAT IS ABOUTMYSCHOOL?
+-----------------------
+
+AboutMySchool is not just a list of schools. It is a fully detailed institutional
+directory designed with depth and usability in mind. Each institution listed on
+the platform comes with a rich, informative profile that goes far beyond a simple
+name and address. Users get a 360-degree view of each institution through
+multimedia content, structured data, and direct digital connections.
+
+The site exists because finding reliable, complete, and visually rich information
+about educational institutions in Nepal has historically been difficult. Parents
+spend hours calling schools or travelling in person just to gather basic details.
+Students struggle to compare institutions when applying. AboutMySchool solves
+this problem by putting all essential information — and more — in a single,
+searchable, filterable, and visually rich directory.
+
+
+INSTITUTION PROFILES — WHAT YOU WILL FIND
+-------------------------------------------
+
+Every institution listed on AboutMySchool has its own dedicated profile page
+packed with information across multiple categories:
+
+1. GENERAL INFORMATION
+   - Full official name of the institution
+   - Type of institution (school, college, university, technical institute, etc.)
+   - Level of education offered (primary, lower secondary, secondary, higher
+     secondary, bachelor, master, doctoral, vocational/technical)
+   - Year of establishment
+   - Affiliation details (which university, board, or body the institution is
+     affiliated with — such as Tribhuvan University, Pokhara University,
+     Kathmandu University, CTEVT, NEB, CDC, and others)
+   - Registration and recognition details
+
+2. LOCATION & ADDRESS
+   - Province, district, and municipality
+   - Ward number and tole/locality
+   - Full postal address
+   - Embedded map or geographic reference for easy navigation
+
+3. CONTACT & SOCIAL PRESENCE
+   - Phone numbers (office, principal, admission)
+   - Email address
+   - Official website link
+   - Social media links including Facebook, Instagram, YouTube, Twitter/X,
+     LinkedIn, and TikTok where available
+   - Direct messaging or inquiry options
+
+4. MULTIMEDIA CONTENT
+   - Photo gallery: official institution photographs, campus images, classrooms,
+     labs, libraries, sports facilities, events, and more
+   - Audio: institution introduction audio clips, welcome messages, or
+     audio descriptions where provided
+   - Video: promotional videos, campus tour videos, admission guidance videos,
+     event highlights, and YouTube channel integrations — giving prospective
+     students and parents a real feel of the institution before visiting
+
+5. ACADEMIC & ADMINISTRATIVE DETAILS
+   - Faculties and departments offered
+   - Programs and courses available
+   - Admission requirements and process
+   - Fee structure (where disclosed)
+   - Scholarships and financial aid information
+   - Medium of instruction (Nepali, English, or bilingual)
+   - Total student capacity and current enrolment (where available)
+   - Teacher-to-student ratio
+   - Available infrastructure (science labs, computer labs, library, hostel,
+     sports grounds, canteen, transport, etc.)
+
+
+THE SEARCH SYSTEM
+------------------
+
+At the heart of AboutMySchool is a powerful search system that allows users to
+instantly find institutions matching their specific needs. The search bar is
+prominently placed on the homepage and is accessible from every page of the
+site. Users can type any keyword — the institution's name, a subject or program,
+or a place name — and receive instant, relevant results from the directory.
+
+The search is designed to be fast, forgiving of spelling variations, and useful
+even with partial information. Whether a user types "Kathmandu engineering college"
+or just "engineering Kathmandu," the system surfaces the most relevant matches.
+
+
+FILTER SYSTEM — NARROW DOWN YOUR SEARCH
+-----------------------------------------
+
+To make discovery even easier, AboutMySchool provides a multi-dimensional filter
+system that lets users slice and narrow the full institution list by several key
+criteria simultaneously. The filters are:
+
+1. ADDRESS / LOCATION FILTER
+   Users can filter institutions by geographic area — from the province level down
+   to the district and municipality. This makes it easy to find all institutions
+   in a specific area, whether a user is looking for schools in Lalitpur, colleges
+   in Butwal, or universities in Pokhara. The location filter is especially useful
+   for families looking for institutions near their home or within a preferred
+   region of Nepal.
+
+2. TYPE FILTER
+   Institutions on AboutMySchool span a wide range — from basic primary schools to
+   vocational training centres to full universities. The type filter lets users
+   select exactly the kind of institution they are interested in:
+   - School (primary, lower secondary, secondary)
+   - Higher Secondary School (plus two / +2)
+   - College
+   - University / Campus
+   - Technical and Vocational Institute
+   - Medical and Health Sciences Institution
+   - Law College
+   - Management Institute
+   - Engineering College
+   - Other specialised institutions
+
+3. LEVEL FILTER
+   This filter targets the level of education the institution provides:
+   - Early Childhood Development (ECD) / Pre-Primary
+   - Primary (Grade 1–5)
+   - Lower Secondary (Grade 6–8)
+   - Secondary (Grade 9–10)
+   - Higher Secondary / +2 (Grade 11–12)
+   - Bachelor Level
+   - Master Level
+   - M.Phil / Doctoral Level
+   - Certificate and Diploma Level
+   - Short-term Vocational / Skill Training
+
+4. AFFILIATION FILTER
+   Affiliation is a critical factor for students choosing a college or university.
+   This filter allows users to sort institutions by their governing affiliating
+   body, including but not limited to:
+   - Tribhuvan University (TU)
+   - Kathmandu University (KU)
+   - Pokhara University (PU)
+   - Purbanchal University
+   - Mid-Western University
+   - Far-Western University
+   - Lumbini Buddhist University
+   - Agriculture and Forestry University (AFU)
+   - Nepal Open University
+   - Council for Technical Education and Vocational Training (CTEVT)
+   - National Examinations Board (NEB)
+   - Curriculum Development Centre (CDC)
+   - Private Boards and International Affiliations
+
+Filters can be combined freely. A user can, for example, filter for all
+bachelor-level colleges affiliated with Tribhuvan University located in
+Bharatpur, Chitwan — and receive a focused, relevant list instantly.
+
+
+WHO IS ABOUTMYSCHOOL FOR?
+--------------------------
+
+STUDENTS
+Students at every stage — from those choosing a secondary school to those
+applying for master's programs — can use AboutMySchool to research, compare,
+and shortlist institutions. The multimedia profiles give students a feel for
+campus life without visiting in person. The filter system helps them match
+institutions to their academic goals, preferred location, and budget.
+
+PARENTS
+Parents often make school and college decisions on behalf of or in consultation
+with their children. AboutMySchool gives parents the full picture — contact
+details to call the institution, photos to assess the campus environment, social
+media links to check the institution's online activity, and detailed academic
+information to evaluate quality and fit.
+
+TEACHERS AND EDUCATORS
+Educators looking to move jobs, explore collaboration opportunities, or simply
+research peer institutions can browse the directory to understand the educational
+landscape across Nepal.
+
+RESEARCHERS AND POLICYMAKERS
+AboutMySchool's structured institutional data is a valuable resource for
+educational researchers, NGOs, government bodies, and policymakers who need
+a comprehensive view of the educational ecosystem in Nepal.
+
+JOURNALISTS AND MEDIA
+Media professionals covering education in Nepal can use AboutMySchool to quickly
+find verified institutional details for stories, reports, and investigations.
+
+INSTITUTIONS THEMSELVES
+Educational institutions benefit from being listed on AboutMySchool because it
+increases their visibility to the students and parents they want to reach. A
+complete, multimedia-rich profile on AboutMySchool acts as a digital front door
+that works 24 hours a day.
+
+
+WHY ABOUTMYSCHOOL MATTERS FOR NEPAL
+-------------------------------------
+
+Nepal's educational sector is large, diverse, and geographically spread across
+challenging terrain. There are thousands of registered educational institutions
+spread across 77 districts and 7 provinces. Historically, information about most
+of these institutions has been scattered — on outdated government registers, word
+of mouth, or fragmented social media pages.
+
+AboutMySchool changes this by:
+
+- Creating a centralised, modern, and user-friendly home for all educational
+  institution data in Nepal
+- Making information accessible to anyone with an internet connection, reducing
+  geographic and economic barriers to informed decision-making
+- Supporting Nepal's growing internet-savvy population who expect to research
+  important decisions online before acting
+- Helping smaller institutions in less-prominent districts get the same digital
+  visibility as well-established Kathmandu institutions
+- Supporting parents and students in rural Nepal who cannot easily travel to
+  visit multiple institutions before choosing
+
+
+MEDIA-RICH EXPERIENCE
+----------------------
+
+What sets AboutMySchool apart from a plain directory or a government list is
+its commitment to a rich media experience. Text alone cannot convey the feel
+of a campus, the energy of a school's community, or the quality of its
+facilities. That is why each institution profile on AboutMySchool is designed
+to carry:
+
+IMAGES
+Professional and candid photographs covering campus buildings, classrooms,
+laboratories, sports fields, cultural events, graduation ceremonies, and
+student life. Images are displayed in a clean, organised gallery format that
+users can browse at their own pace.
+
+AUDIO
+Some institutions provide audio introductions — a welcome message from the
+principal, an overview of programs, or a brief audio tour. This is particularly
+valuable for users with limited data access or those who prefer audio-first
+browsing.
+
+VIDEO
+Video is the most powerful medium for institutional marketing and transparency.
+AboutMySchool supports embedded video content including YouTube channel videos,
+campus tour recordings, student testimonials, faculty introductions, and event
+recaps. Video brings an institution to life in a way that text and photos alone
+cannot.
+
+
+SOCIAL MEDIA INTEGRATION
+-------------------------
+
+Modern educational institutions maintain active social media presences — and
+their followers and prospective students expect to find those links easily.
+AboutMySchool consolidates an institution's social media presence into one
+convenient section of the profile, including direct links to:
+
+- Facebook Pages
+- Instagram Profiles
+- YouTube Channels
+- Twitter / X Accounts
+- LinkedIn Pages
+- TikTok Profiles
+
+This integration means users do not need to search separately for an
+institution's social presence. Everything is one click away from the profile.
+
+
+PLATFORM VALUES
+----------------
+
+ACCURACY
+AboutMySchool is committed to providing accurate, verified, and up-to-date
+information. Institution profiles are reviewed and updated regularly to ensure
+data remains current and reliable.
+
+INCLUSIVITY
+The platform is built for all of Nepal — not just Kathmandu. Institutions in
+remote districts and underserved provinces receive the same quality of profile
+and visibility as institutions in major urban centres.
+
+ACCESSIBILITY
+The site is designed to be accessible on low-bandwidth connections and mobile
+devices — recognising that a significant portion of Nepal's population accesses
+the internet primarily through smartphones.
+
+TRANSPARENCY
+By making institutional data publicly available, AboutMySchool promotes
+transparency in the education sector, helping users make informed decisions
+and holding institutions accountable to the information they present.
+
+
+TECHNICAL HIGHLIGHTS
+---------------------
+
+AboutMySchool is built on modern web technology (React with Vite) and hosted on
+Vercel's global content delivery network, ensuring fast load times for users
+across Nepal and internationally. The platform features:
+
+- Responsive design optimised for both desktop and mobile browsing
+- Fast search with real-time filtering across the full institution database
+- Multimedia support for images, audio, and video content
+- Structured data and SEO-optimised pages for each institution, making individual
+  institution profiles discoverable through Google and other search engines
+- Clean, user-friendly interface with intuitive navigation and filtering
+
+
+VISION
+-------
+
+AboutMySchool's vision is to become the definitive digital reference for
+education in Nepal — the first place any student, parent, or educator turns to
+when they need information about any educational institution anywhere in the
+country. The platform aims to grow alongside Nepal's rapidly expanding education
+sector, continuously adding new institutions, improving data quality, and
+introducing new features that serve the evolving needs of Nepal's educational
+community.
+
+
+MISSION
+--------
+
+To make quality educational information freely accessible to every Nepali student
+and family — regardless of location, background, or economic circumstance —
+empowering them to make confident, informed decisions about education.
+
+
+CONTACT & LISTING
+------------------
+
+Educational institutions that wish to be listed or update their profile on
+AboutMySchool are encouraged to reach out through the contact channels available
+on the website. Listing is free, and the process is designed to be simple and
+straightforward.
+
+================================================================================
+AboutMySchool.com | Nepal's Educational Directory
+Empowering Nepali Students and Families Through Information
+================================================================================
+
+================================================================================
+ABOUTMYSCHOOL.COM — सम्पूर्ण साइट विवरण
+नेपालको सबैभन्दा विस्तृत शैक्षिक संस्था निर्देशिका
+================================================================================
+
+
+परिचय
+------
+
+AboutMySchool नेपालको एक समर्पित अनलाइन शैक्षिक निर्देशिका हो, जुन विद्यार्थीहरू,
+अभिभावकहरू र शैक्षिक संस्थाहरूबिचको सूचना अन्तराललाई पाट्न निर्मित गरिएको छ।
+चाहे तपाईं सही कलेज खोज्दै गरेको विद्यार्थी होस्, आफ्नो बच्चाको लागि विद्यालय
+खोज्दै गरेको अभिभावक होस्, वा सम्बद्ध संस्थाहरू अन्वेषण गर्दै गरेको शिक्षक होस् —
+AboutMySchool एउटै यस्तो प्लेटफर्म हो जहाँ नेपालका सबै शैक्षिक संस्थाहरू एकै ठाउँमा
+खोज्न, अन्वेषण गर्न र मूल्याङ्कन गर्न सकिन्छ।
+
+यो प्लेटफर्म नेपालभरि सञ्चालित विद्यालय, कलेज, विश्वविद्यालय, प्रशिक्षण संस्थाहरू
+र अन्य शैक्षिक निकायहरूको विस्तृत, सटीक र अद्यावधिक प्रोफाइल एकत्रित गर्ने निःशुल्क
+र सार्वजनिक रूपमा उपलब्ध स्रोतको रूपमा काम गर्दछ। पोखराका पहाडहरूदेखि तराईका
+मैदानहरूसम्म, काठमाडौंका व्यस्त सडकहरूदेखि सुदूर जिल्लाहरूसम्म — AboutMySchool ले
+हरेक संस्थालाई डिजिटल नक्सामा राख्ने लक्ष्य राख्दछ।
+
+
+AboutMySchool के हो?
+---------------------
+
+AboutMySchool केवल विद्यालयहरूको सूची मात्र होइन। यो गहिराइ र उपयोगिताका साथ
+डिजाइन गरिएको एक विस्तृत संस्थागत निर्देशिका हो। प्लेटफर्ममा सूचीबद्ध प्रत्येक
+संस्थाको प्रोफाइल नाम र ठेगानाभन्दा धेरै परसम्म जान्छ। मल्टिमिडिया सामग्री,
+संरचित डेटा र प्रत्यक्ष डिजिटल सम्पर्कहरूमार्फत प्रयोगकर्ताहरूले प्रत्येक संस्थाको
+३६०-डिग्री दृश्य पाउँछन्।
+
+यो साइट यसलिए अस्तित्वमा आयो किनभने नेपालमा शैक्षिक संस्थाहरूबारे भरपर्दो,
+सम्पूर्ण र दृश्यात्मक रूपमा समृद्ध जानकारी पाउन ऐतिहासिक रूपमा कठिन रहेको छ।
+अभिभावकहरू मौलिक विवरण मात्र सङ्कलन गर्न विद्यालयहरूमा फोन गर्न वा सशरीर
+जाँदैमा घण्टौं खर्च गर्छन्। विद्यार्थीहरूले आवेदन गर्दा संस्थाहरूको तुलना गर्न
+संघर्ष गर्छन्। AboutMySchool ले सबै आवश्यक जानकारी — र थप — एउटै खोज्न मिल्ने,
+फिल्टर गर्न मिल्ने र दृश्यात्मक रूपमा समृद्ध निर्देशिकामा राखेर यो समस्या समाधान
+गर्दछ।
+
+
+संस्था प्रोफाइल — तपाईंले के पाउनुहुन्छ
+-------------------------------------------
+
+AboutMySchool मा सूचीबद्ध प्रत्येक संस्थाको आफ्नै समर्पित प्रोफाइल पृष्ठ हुन्छ
+जुन धेरै श्रेणीहरूमा जानकारीले भरिपूर्ण हुन्छ:
+
+१. सामान्य जानकारी
+   - संस्थाको पूर्ण आधिकारिक नाम
+   - संस्थाको प्रकार (विद्यालय, कलेज, विश्वविद्यालय, प्राविधिक संस्था, आदि)
+   - प्रदान गरिने शिक्षाको स्तर (प्राथमिक, निम्न माध्यमिक, माध्यमिक, उच्च
+     माध्यमिक, स्नातक, स्नातकोत्तर, विद्यावारिधि, व्यावसायिक/प्राविधिक)
+   - स्थापना वर्ष
+   - सम्बन्धन विवरण (त्रिभुवन विश्वविद्यालय, पोखरा विश्वविद्यालय, काठमाडौं
+     विश्वविद्यालय, CTEVT, NEB, CDC र अन्य)
+   - दर्ता र मान्यता विवरण
+
+२. स्थान र ठेगाना
+   - प्रदेश, जिल्ला र नगरपालिका
+   - वडा नम्बर र टोल/इलाका
+   - पूर्ण हुलाक ठेगाना
+   - सजिलो नेभिगेसनका लागि नक्सा
+
+३. सम्पर्क र सामाजिक उपस्थिति
+   - फोन नम्बरहरू (कार्यालय, प्रधानाध्यापक, भर्ना)
+   - इमेल ठेगाना
+   - आधिकारिक वेबसाइट लिंक
+   - फेसबुक, इन्स्टाग्राम, युट्युब, ट्विटर/X, लिंक्डइन र टिकटक सामाजिक
+     सञ्जाल लिंकहरू
+   - प्रत्यक्ष सन्देश वा सोधपुछ विकल्पहरू
+
+४. मल्टिमिडिया सामग्री
+   - फोटो ग्यालेरी: आधिकारिक संस्था फोटोहरू, क्याम्पस छविहरू, कक्षाकोठाहरू,
+     प्रयोगशालाहरू, पुस्तकालयहरू, खेल सुविधाहरू, कार्यक्रमहरू र थप
+   - अडियो: संस्था परिचय क्लिपहरू, स्वागत सन्देशहरू वा अडियो विवरणहरू
+   - भिडियो: प्रचारात्मक भिडियोहरू, क्याम्पस भ्रमण भिडियोहरू, भर्ना मार्गदर्शन,
+     कार्यक्रम हाइलाइटहरू र युट्युब च्यानल एकीकरण
+
+५. शैक्षिक र प्रशासनिक विवरण
+   - उपलब्ध संकाय र विभागहरू
+   - उपलब्ध कार्यक्रम र पाठ्यक्रमहरू
+   - भर्ना आवश्यकता र प्रक्रिया
+   - शुल्क संरचना (उपलब्ध भएमा)
+   - छात्रवृत्ति र आर्थिक सहायता जानकारी
+   - शिक्षणको माध्यम (नेपाली, अंग्रेजी वा द्विभाषिक)
+   - कुल विद्यार्थी क्षमता र हालको भर्ना
+   - उपलब्ध पूर्वाधार (विज्ञान प्रयोगशाला, कम्प्युटर ल्याब, पुस्तकालय, छात्रावास,
+     खेल मैदान, क्यान्टिन, यातायात, आदि)
+
+
+खोज प्रणाली
+-------------
+
+AboutMySchool को मूलमा एउटा शक्तिशाली खोज प्रणाली छ जसले प्रयोगकर्ताहरूलाई
+आफ्नो विशिष्ट आवश्यकता पूरा गर्ने संस्थाहरू तुरुन्तै फेला पार्न अनुमति दिन्छ।
+खोज बार मुख्यपृष्ठमा प्रमुख रूपमा राखिएको छ र साइटका प्रत्येक पृष्ठबाट पहुँच
+गर्न सकिन्छ। प्रयोगकर्ताहरूले कुनै पनि किवर्ड टाइप गर्न सक्छन् — संस्थाको नाम,
+विषय वा कार्यक्रम, वा ठाउँको नाम — र निर्देशिकाबाट तत्काल, सान्दर्भिक नतिजाहरू
+प्राप्त गर्न सक्छन्।
+
+
+फिल्टर प्रणाली — आफ्नो खोज साँघुरो पार्नुहोस्
+-------------------------------------------------
+
+खोजलाई झन् सजिलो बनाउन, AboutMySchool ले एक बहु-आयामी फिल्टर प्रणाली प्रदान
+गर्दछ जसले प्रयोगकर्ताहरूलाई धेरै मुख्य मापदण्डहरूद्वारा एकैसाथ संस्थाहरूको
+सूची घटाउन दिन्छ:
+
+१. ठेगाना / स्थान फिल्टर
+   प्रयोगकर्ताहरूले प्रदेश स्तरदेखि जिल्ला र नगरपालिकासम्म भौगोलिक क्षेत्रद्वारा
+   संस्थाहरू फिल्टर गर्न सक्छन्। यसले ललितपुरका सबै विद्यालयहरू, बुटवलका
+   कलेजहरू वा पोखराका विश्वविद्यालयहरू फेला पार्न सजिलो बनाउँछ। स्थान फिल्टर
+   विशेष गरी आफ्नो घर नजिकका वा नेपालको मनपर्ने क्षेत्रभित्रका संस्थाहरू
+   खोज्दै गरेका परिवारहरूका लागि उपयोगी छ।
+
+२. प्रकार फिल्टर
+   AboutMySchool मा संस्थाहरू विस्तृत दायरामा फैलिएका छन् — आधारभूत प्राथमिक
+   विद्यालयदेखि व्यावसायिक प्रशिक्षण केन्द्रहरूदेखि पूर्ण विश्वविद्यालयसम्म।
+   प्रकार फिल्टरले प्रयोगकर्ताहरूलाई आफूलाई चाहिएको संस्थाको प्रकार ठ्याक्कै
+   छनोट गर्न दिन्छ:
+   - विद्यालय (प्राथमिक, निम्न माध्यमिक, माध्यमिक)
+   - उच्च माध्यमिक विद्यालय (+२)
+   - कलेज
+   - विश्वविद्यालय / क्याम्पस
+   - प्राविधिक तथा व्यावसायिक संस्था
+   - चिकित्सा तथा स्वास्थ्य विज्ञान संस्था
+   - कानून कलेज
+   - व्यवस्थापन संस्था
+   - इञ्जिनियरिङ कलेज
+   - अन्य विशेष संस्थाहरू
+
+३. स्तर फिल्टर
+   यो फिल्टरले संस्थाले प्रदान गर्ने शिक्षाको स्तरलाई लक्षित गर्दछ:
+   - बाल विकास / पूर्व-प्राथमिक (ECD)
+   - प्राथमिक (कक्षा १–५)
+   - निम्न माध्यमिक (कक्षा ६–८)
+   - माध्यमिक (कक्षा ९–१०)
+   - उच्च माध्यमिक / +२ (कक्षा ११–१२)
+   - स्नातक तह
+   - स्नातकोत्तर तह
+   - एम.फिल / विद्यावारिधि तह
+   - प्रमाणपत्र र डिप्लोमा तह
+   - अल्पकालीन व्यावसायिक / सीप तालिम
+
+४. सम्बन्धन फिल्टर
+   सम्बन्धन कलेज वा विश्वविद्यालय छनोट गर्ने विद्यार्थीहरूका लागि एउटा महत्वपूर्ण
+   कारक हो। यो फिल्टरले प्रयोगकर्ताहरूलाई आफ्नो सञ्चालित निकायद्वारा संस्थाहरू
+   क्रमबद्ध गर्न अनुमति दिन्छ, जसमा समावेश छन्:
+   - त्रिभुवन विश्वविद्यालय (TU)
+   - काठमाडौं विश्वविद्यालय (KU)
+   - पोखरा विश्वविद्यालय (PU)
+   - पूर्वाञ्चल विश्वविद्यालय
+   - मध्यपश्चिमाञ्चल विश्वविद्यालय
+   - सुदूरपश्चिम विश्वविद्यालय
+   - लुम्बिनी बौद्ध विश्वविद्यालय
+   - कृषि तथा वन विश्वविद्यालय (AFU)
+   - नेपाल खुला विश्वविद्यालय
+   - प्राविधिक शिक्षा तथा व्यावसायिक तालिम परिषद् (CTEVT)
+   - राष्ट्रिय परीक्षा बोर्ड (NEB)
+   - पाठ्यक्रम विकास केन्द्र (CDC)
+   - निजी बोर्ड र अन्तर्राष्ट्रिय सम्बन्धनहरू
+
+फिल्टरहरू स्वतन्त्र रूपमा संयोजन गर्न सकिन्छ। उदाहरणका लागि, एक प्रयोगकर्ताले
+चितवन, भरतपुरमा अवस्थित त्रिभुवन विश्वविद्यालयसँग सम्बद्ध सबै स्नातक तहका
+कलेजहरू फिल्टर गर्न सक्छन् — र तुरुन्तै केन्द्रित, सान्दर्भिक सूची प्राप्त
+गर्न सक्छन्।
+
+
+AboutMySchool को लागि को हो?
+------------------------------
+
+विद्यार्थीहरू
+माध्यमिक विद्यालय छनोट गर्दैदेखि स्नातकोत्तर कार्यक्रमका लागि आवेदन गर्दासम्म
+हरेक चरणका विद्यार्थीहरूले संस्थाहरू अनुसन्धान गर्न, तुलना गर्न र छोटो सूची
+बनाउन AboutMySchool प्रयोग गर्न सक्छन्। मल्टिमिडिया प्रोफाइलले विद्यार्थीहरूलाई
+सशरीर भ्रमण नगरी क्याम्पस जीवनको अनुभव दिन्छ। फिल्टर प्रणालीले उनीहरूलाई
+आफ्नो शैक्षिक लक्ष्य, मनपर्ने स्थान र बजेटसँग संस्थाहरू मिलाउन मद्दत गर्दछ।
+
+अभिभावकहरू
+अभिभावकहरूले प्रायः आफ्नो बच्चाका तर्फबाट वा परामर्शमा विद्यालय र कलेज निर्णय
+गर्छन्। AboutMySchool ले अभिभावकहरूलाई सम्पूर्ण तस्वीर दिन्छ — संस्थामा कल
+गर्न सम्पर्क विवरणहरू, क्याम्पस वातावरण मूल्याङ्कन गर्न फोटोहरू, संस्थाको
+अनलाइन गतिविधि जाँच गर्न सामाजिक सञ्जाल लिंकहरू र गुणस्तर र उपयुक्तता
+मूल्याङ्कन गर्न विस्तृत शैक्षिक जानकारी।
+
+शिक्षकहरू र शिक्षाविद्हरू
+काम परिवर्तन गर्न खोज्दै गरेका, सहकार्यको अवसर अन्वेषण गर्दै गरेका वा साथी
+संस्थाहरूबारे अनुसन्धान गर्दै गरेका शिक्षाविद्हरूले नेपालभरको शैक्षिक परिदृश्य
+बुझ्न निर्देशिका ब्राउज गर्न सक्छन्।
+
+अनुसन्धानकर्ता र नीतिनिर्माताहरू
+AboutMySchool को संरचित संस्थागत डेटा शैक्षिक अनुसन्धानकर्ताहरू, गैरसरकारी
+संस्थाहरू, सरकारी निकायहरू र नेपालको शैक्षिक पारिस्थितिकी तन्त्रको व्यापक
+दृश्य चाहिने नीतिनिर्माताहरूका लागि एउटा मूल्यवान स्रोत हो।
+
+पत्रकार र मिडिया
+नेपालमा शिक्षाबारे समाचार, रिपोर्ट र अनुसन्धान गर्दै गरेका मिडिया पेशेवरहरूले
+कथाहरूका लागि प्रमाणित संस्थागत विवरण द्रुत रूपमा फेला पार्न AboutMySchool
+प्रयोग गर्न सक्छन्।
+
+स्वयं संस्थाहरू
+शैक्षिक संस्थाहरू AboutMySchool मा सूचीबद्ध भएबाट लाभान्वित हुन्छन् किनभने यसले
+उनीहरूले पुग्न चाहेका विद्यार्थी र अभिभावकहरूमा आफ्नो दृश्यता बढाउँछ।
+AboutMySchool मा सम्पूर्ण, मल्टिमिडिया-समृद्ध प्रोफाइलले दिनका २४ घण्टा काम
+गर्ने डिजिटल प्रवेशद्वारको रूपमा काम गर्दछ।
+
+
+नेपालका लागि AboutMySchool किन महत्वपूर्ण छ
+----------------------------------------------
+
+नेपालको शैक्षिक क्षेत्र ठूलो, विविध र चुनौतीपूर्ण भूगोलमा फैलिएको छ। ७७ जिल्ला
+र ७ प्रदेशमा फैलिएका हजारौं दर्ता शैक्षिक संस्थाहरू छन्। ऐतिहासिक रूपमा,
+यी धेरैजसो संस्थाहरूबारे जानकारी छरिएको थियो — पुरानो सरकारी दर्तामा,
+मुखमुखीमा वा विखण्डित सामाजिक सञ्जाल पृष्ठहरूमा।
+
+AboutMySchool ले यो परिवर्तन गर्दछ:
+
+- नेपालमा सबै शैक्षिक संस्था डेटाको लागि केन्द्रीकृत, आधुनिक र प्रयोगकर्ता
+  मैत्री घर सिर्जना गरेर
+- इन्टरनेट पहुँच भएका जो कोहीलाई जानकारी सुलभ बनाएर, सूचित निर्णय लिने
+  भौगोलिक र आर्थिक बाधाहरू घटाएर
+- महत्वपूर्ण निर्णयहरू कार्य गर्नु अघि अनलाइन अनुसन्धान गर्ने अपेक्षा राख्ने
+  नेपालको बढ्दो इन्टरनेट-सचेत जनसंख्यालाई सहयोग गरेर
+- कम प्रमुख जिल्लाहरूका साना संस्थाहरूलाई स्थापित काठमाडौं संस्थाहरूजस्तै
+  डिजिटल दृश्यता दिएर
+- धेरै संस्थाहरू छनोट गर्नु अघि सजिलै भ्रमण गर्न नसक्ने ग्रामीण नेपालका
+  अभिभावकहरू र विद्यार्थीहरूलाई सहयोग गरेर
+
+
+मिडिया-समृद्ध अनुभव
+---------------------
+
+AboutMySchool लाई सामान्य निर्देशिका वा सरकारी सूचीभन्दा अलग बनाउने कुरा
+भनेको यसको समृद्ध मिडिया अनुभवप्रतिको प्रतिबद्धता हो। पाठ मात्रैले क्याम्पसको
+अनुभव, विद्यालयको समुदायको उर्जा वा यसको सुविधाको गुणस्तर व्यक्त गर्न सक्दैन।
+त्यसैले AboutMySchool मा प्रत्येक संस्था प्रोफाइलमा समावेश हुन्छ:
+
+तस्बिरहरू
+क्याम्पस भवनहरू, कक्षाकोठाहरू, प्रयोगशालाहरू, खेल मैदानहरू, सांस्कृतिक
+कार्यक्रमहरू, दीक्षान्त समारोहहरू र विद्यार्थी जीवनका व्यावसायिक र स्वाभाविक
+तस्बिरहरू। तस्बिरहरू सफा, व्यवस्थित ग्यालेरी ढाँचामा प्रदर्शित हुन्छन्।
+
+अडियो
+केही संस्थाहरूले अडियो परिचय प्रदान गर्छन् — प्रधानाध्यापकको स्वागत सन्देश,
+कार्यक्रमहरूको अवलोकन वा संक्षिप्त अडियो भ्रमण। यो विशेष गरी सीमित डेटा
+पहुँच भएका वा अडियो-पहिले ब्राउजिङ रुचाउने प्रयोगकर्ताहरूका लागि मूल्यवान छ।
+
+भिडियो
+भिडियो संस्थागत पारदर्शिताका लागि सबैभन्दा शक्तिशाली माध्यम हो। AboutMySchool
+ले युट्युब च्यानल भिडियोहरू, क्याम्पस भ्रमण रेकर्डिङहरू, विद्यार्थी प्रशंसापत्रहरू,
+शिक्षक परिचयहरू र कार्यक्रम पुनरावलोकनहरू सहित एम्बेड गरिएको भिडियो सामग्री
+समर्थन गर्दछ।
+
+
+सामाजिक सञ्जाल एकीकरण
+------------------------
+
+आधुनिक शैक्षिक संस्थाहरूले सक्रिय सामाजिक सञ्जाल उपस्थिति कायम राख्छन् —
+र उनीहरूका अनुयायीहरू र सम्भावित विद्यार्थीहरूले ती लिंकहरू सजिलै फेला
+पार्ने अपेक्षा गर्छन्। AboutMySchool ले एउटा सुविधाजनक खण्डमा संस्थाको
+सामाजिक सञ्जाल उपस्थिति समेकित गर्दछ, जसमा समावेश छन्:
+
+- फेसबुक पेजहरू
+- इन्स्टाग्राम प्रोफाइलहरू
+- युट्युब च्यानलहरू
+- ट्विटर / X खाताहरू
+- लिंक्डइन पेजहरू
+- टिकटक प्रोफाइलहरू
+
+यो एकीकरणको अर्थ हो कि प्रयोगकर्ताहरूले संस्थाको सामाजिक उपस्थितिका लागि
+छुट्टै खोज्न पर्दैन। प्रोफाइलबाट सबै एक क्लिकमा पहुँचयोग्य छ।
+
+
+प्लेटफर्म मूल्यहरू
+--------------------
+
+सटीकता
+AboutMySchool सटीक, प्रमाणित र अद्यावधिक जानकारी प्रदान गर्न प्रतिबद्ध छ।
+संस्था प्रोफाइलहरू नियमित रूपमा समीक्षा र अद्यावधिक गरिन्छन्।
+
+समावेशिता
+प्लेटफर्म सम्पूर्ण नेपालका लागि निर्मित छ — केवल काठमाडौंका लागि मात्र होइन।
+सुदूर जिल्ला र कम सेवा प्राप्त प्रदेशका संस्थाहरूले प्रमुख सहरी केन्द्रका
+संस्थाहरूजस्तै गुणस्तरको प्रोफाइल र दृश्यता पाउँछन्।
+
+पहुँचयोग्यता
+साइट कम-ब्यान्डविड्थ जडान र मोबाइल उपकरणहरूमा पहुँचयोग्य हुने गरी डिजाइन
+गरिएको छ — यो स्वीकार गर्दै कि नेपालको जनसंख्याको महत्वपूर्ण हिस्साले
+मुख्यतया स्मार्टफोनमार्फत इन्टरनेट पहुँच गर्दछ।
+
+पारदर्शिता
+संस्थागत डेटा सार्वजनिक रूपमा उपलब्ध गराएर, AboutMySchool ले शिक्षा क्षेत्रमा
+पारदर्शितालाई बढावा दिन्छ, प्रयोगकर्ताहरूलाई सूचित निर्णय लिन मद्दत गर्दछ
+र संस्थाहरूलाई उनीहरूले प्रस्तुत गर्ने जानकारीप्रति जवाफदेही राख्दछ।
+
+
+दृष्टिकोण (Vision)
+--------------------
+
+AboutMySchool को दृष्टिकोण नेपालमा शिक्षाको लागि निश्चित डिजिटल सन्दर्भ बन्नु
+हो — पहिलो ठाउँ जहाँ कुनै पनि विद्यार्थी, अभिभावक वा शिक्षक देशको कुनै पनि
+कुनामा रहेको कुनै पनि शैक्षिक संस्थाबारे जानकारी चाहँदा जान्छन्। प्लेटफर्मले
+नेपालको द्रुत रूपमा विस्तार हुँदै गरेको शिक्षा क्षेत्रसँगै वृद्धि गर्ने,
+निरन्तर नयाँ संस्थाहरू थप्ने, डेटा गुणस्तर सुधार गर्ने र नेपालको शैक्षिक
+समुदायको विकसित आवश्यकताहरू पूरा गर्ने नयाँ सुविधाहरू पेश गर्ने लक्ष्य राख्दछ।
+
+
+मिसन (Mission)
+---------------
+
+प्रत्येक नेपाली विद्यार्थी र परिवारलाई — स्थान, पृष्ठभूमि वा आर्थिक अवस्था
+जस्तोसुकै भए पनि — गुणस्तरीय शैक्षिक जानकारी निःशुल्क रूपमा सुलभ बनाउनु,
+जसले उनीहरूलाई शिक्षाबारे आत्मविश्वासपूर्ण, सूचित निर्णय लिन सशक्त बनाओस्।
+
+
+सम्पर्क र सूचीकरण
+--------------------
+
+AboutMySchool मा सूचीबद्ध हुन वा आफ्नो प्रोफाइल अद्यावधिक गर्न इच्छुक
+शैक्षिक संस्थाहरूलाई वेबसाइटमा उपलब्ध सम्पर्क च्यानलहरूमार्फत सम्पर्क गर्न
+प्रोत्साहन गरिन्छ। सूचीकरण निःशुल्क छ र प्रक्रिया सरल र सहज बनाइएको छ।
+
+================================================================================
+AboutMySchool.com | नेपालको शैक्षिक निर्देशिका
+जानकारीमार्फत नेपाली विद्यार्थी र परिवारलाई सशक्त बनाउँदै
+================================================================================
