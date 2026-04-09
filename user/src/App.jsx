@@ -1,5 +1,6 @@
 import {
   startTransition,
+  useDeferredValue,
   useEffect,
   useEffectEvent,
   useRef,
@@ -68,13 +69,11 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [detailErrorMessage, setDetailErrorMessage] = useState("");
   const [detailLoadingSlug, setDetailLoadingSlug] = useState("");
-  const [filterLoading, setFilterLoading] = useState(false);
   const [resultsPage, setResultsPage] = useState(1);
   const [filters, setFilters] = useState(() => cloneDefaultFilters());
   const [appliedFilters, setAppliedFilters] = useState(() => cloneDefaultFilters());
   const [filtersArePending, startFilterTransition] = useTransition();
   const [showSyncActivity, setShowSyncActivity] = useState(cachedBusinesses.length === 0);
-  const filterApplyTimerRef = useRef(0);
   const refreshDirectory = useEffectEvent(async ({ forceRefresh = false, cancelledRef = null } = {}) => {
     const hasCachedBusinesses = businesses.length > 0;
     const currentDirectoryStatus = normalizeDirectoryCacheStatus(directoryStatus, businesses.length);
@@ -165,7 +164,6 @@ export default function App() {
     setDetailErrorMessage("");
     setDetailLoadingSlug("");
     setResultsPage(1);
-    setFilterLoading(false);
 
     startTransition(() => {
       setSelectedSlug(route.selectedSlug || "");
@@ -216,14 +214,6 @@ export default function App() {
     setShowSyncActivity(false);
     return undefined;
   }, [syncState]);
-
-  useEffect(() => {
-    return () => {
-      if (filterApplyTimerRef.current) {
-        window.clearTimeout(filterApplyTimerRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (initialRouteAppliedRef.current) {
@@ -333,11 +323,18 @@ export default function App() {
 
   const savedSlugSet = new Set(savedSlugs);
   const businessSlugSet = new Set(businesses.map((business) => business.slug));
-  const appliedFilterCriteria = buildFilterCriteria(appliedFilters);
-  const hasActiveFilters = hasActiveDirectoryFilters(filters);
+  const deferredSearch = useDeferredValue(appliedFilters.search);
+  const displayFilters =
+    deferredSearch === appliedFilters.search
+      ? appliedFilters
+      : {
+          ...appliedFilters,
+          search: deferredSearch,
+        };
+  const appliedFilterCriteria = buildFilterCriteria(displayFilters);
   const filtersAreInSync = areDirectoryFiltersEqual(filters, appliedFilters);
-  const isFiltering = filterLoading || !filtersAreInSync || filtersArePending;
-  const deferFilteredList = loading || isFiltering;
+  const showResultsUpdateHint = !filtersAreInSync || filtersArePending;
+  const deferFilteredList = loading;
   let filteredBusinesses = [];
   if (!deferFilteredList) {
     filteredBusinesses = businesses.filter((business) =>
@@ -472,38 +469,26 @@ export default function App() {
     };
     setFilters(next);
     setResultsPage(1);
-    setFilterLoading(true);
     syncListingRoute(next, { replace: key === "search" });
 
-    if (filterApplyTimerRef.current) {
-      window.clearTimeout(filterApplyTimerRef.current);
+    if (key === "search") {
+      setAppliedFilters(next);
+      return;
     }
 
-    filterApplyTimerRef.current = window.setTimeout(() => {
-      filterApplyTimerRef.current = 0;
-      startFilterTransition(() => {
-        setAppliedFilters(next);
-        setFilterLoading(false);
-      });
-    }, 0);
+    startFilterTransition(() => {
+      setAppliedFilters(next);
+    });
   }
 
   function resetFilters() {
     const nextFilters = cloneDefaultFilters();
     setFilters(nextFilters);
     setResultsPage(1);
-    setFilterLoading(true);
     syncListingRoute(nextFilters);
-    if (filterApplyTimerRef.current) {
-      window.clearTimeout(filterApplyTimerRef.current);
-    }
-    filterApplyTimerRef.current = window.setTimeout(() => {
-      filterApplyTimerRef.current = 0;
-      startFilterTransition(() => {
-        setAppliedFilters(nextFilters);
-        setFilterLoading(false);
-      });
-    }, 0);
+    startFilterTransition(() => {
+      setAppliedFilters(nextFilters);
+    });
   }
 
   function scrollToToolbar() {
@@ -656,7 +641,7 @@ export default function App() {
           </div>
 
           <div className="toolbar-meta">
-            <span>{isFiltering ? "Filtering..." : `${filteredBusinessCount} institutions`}</span>
+            <span>{showResultsUpdateHint ? "Updating results..." : `${filteredBusinessCount} institutions`}</span>
             <span>{savedCount} saved</span>
             <span>{DEFAULT_COUNTRY}</span>
             <span>{provinceCount} provinces</span>
@@ -713,17 +698,12 @@ export default function App() {
         {errorMessage ? <div className="status-banner">{errorMessage}</div> : null}
 
         <main className="content-grid">
-          <section ref={resultsPaneRef} className={`results-pane ${isFiltering ? "is-filtering" : ""}`}>
+          <section ref={resultsPaneRef} className={`results-pane ${showResultsUpdateHint ? "is-filtering" : ""}`}>
             {loading ? (
               <div className="card-grid">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <SkeletonCard key={index} />
                 ))}
-              </div>
-            ) : isFiltering ? (
-              <div className="filter-loading-indicator" role="status" aria-live="polite">
-                <span className="loading-spinner" aria-hidden="true" />
-                <span>Filtering institutions...</span>
               </div>
             ) : null}
             {pagedBusinesses.length ? (
@@ -1818,6 +1798,11 @@ function updateDocumentSeo(pageSeo, structuredData) {
 
   document.title = pageSeo.title;
   upsertMetaTag("description", pageSeo.description);
+  if (Array.isArray(pageSeo.keywords) && pageSeo.keywords.length) {
+    upsertMetaTag("keywords", pageSeo.keywords.join(", "));
+  } else {
+    removeHeadTag('meta[name="keywords"]');
+  }
   upsertMetaTag("robots", pageSeo.robots || "index,follow");
   upsertMetaProperty("og:title", pageSeo.title);
   upsertMetaProperty("og:description", pageSeo.description);

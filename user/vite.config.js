@@ -8,6 +8,7 @@ import {
 } from "./src/directory-records.js";
 import {
   DEFAULT_COUNTRY,
+  DEFAULT_HOME_SEO_SECTIONS,
   DEFAULT_SITE_DESCRIPTION,
   DEFAULT_SITE_NAME,
   DEFAULT_SITE_ORIGIN,
@@ -263,6 +264,7 @@ function createHomePageModel({ businesses, siteName, siteOrigin, basePath, homeP
       `<p class="seo-kicker">aboutmyschool.com</p>`,
       `<h1>Find educational institutes across Nepal</h1>`,
       `<p class="seo-lead">${escapeHtml(DEFAULT_SITE_DESCRIPTION)}</p>`,
+      renderSeoNarrativeSection(DEFAULT_HOME_SEO_SECTIONS),
       renderSeoLinkSection("Browse by province", provinceLinks),
       renderSeoLinkSection("Browse by district", districtLinks),
       renderSeoLinkSection("Browse by institute type", typeLinks),
@@ -429,6 +431,11 @@ function renderHtmlPage(templateHtml, { seo, structuredData, bodyHtml }) {
   let html = String(templateHtml || "");
   html = html.replace(/<title>.*?<\/title>/i, `<title>${escapeHtml(seo.title)}</title>`);
   html = replaceMetaTag(html, "description", seo.description);
+  html = replaceMetaTag(
+    html,
+    "keywords",
+    Array.isArray(seo.keywords) ? seo.keywords.join(", ") : ""
+  );
   html = replaceMetaTag(html, "robots", seo.robots || "index,follow");
   html = replaceMetaProperty(html, "og:title", seo.title);
   html = replaceMetaProperty(html, "og:description", seo.description);
@@ -483,6 +490,24 @@ function renderSeoLinkSection(title, links) {
         )}</span></li>`
     ),
     `</ul>`,
+    `</section>`,
+  ].join("");
+}
+
+function renderSeoNarrativeSection(sections) {
+  const items = Array.isArray(sections) ? sections.filter(Boolean) : [];
+  if (!items.length) {
+    return "";
+  }
+
+  return [
+    `<section class="seo-section">`,
+    ...items.map(
+      (section) =>
+        `<div class="seo-story-block"><h2>${escapeHtml(section.title)}</h2><p>${escapeHtml(
+          section.body
+        )}</p></div>`
+    ),
     `</section>`,
   ].join("");
 }
@@ -833,6 +858,8 @@ const SEO_FALLBACK_STYLE = `
 .seo-lead{max-width:860px;margin:16px 0 0;color:#4f5d72;line-height:1.7}
 .seo-section{margin-top:28px;padding:22px;border:1px solid rgba(24,45,77,.1);border-radius:24px;background:rgba(255,255,255,.82);box-shadow:0 14px 30px rgba(18,35,64,.06)}
 .seo-link-list,.seo-business-list,.seo-chip-list{display:grid;gap:12px;padding:0;margin:0;list-style:none}
+.seo-story-block+.seo-story-block{margin-top:18px;padding-top:18px;border-top:1px solid rgba(24,45,77,.08)}
+.seo-story-block p{margin:10px 0 0;color:#4f5d72;line-height:1.72}
 .seo-link-list li,.seo-business-list li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid rgba(24,45,77,.08)}
 .seo-link-list span,.seo-business-list span{color:#5c687d}
 .seo-link-list a,.seo-business-list a,.seo-inline-links a,.seo-breadcrumbs a{color:#1f6ff2;text-decoration:none}

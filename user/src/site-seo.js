@@ -1,11 +1,72 @@
+import {
+  GENERATED_HOME_SEO_SECTIONS,
+  GENERATED_PAGE_TYPE_KEYWORDS,
+  GENERATED_SITE_DESCRIPTION,
+  GENERATED_SITE_KEYWORDS,
+} from "./seo-generated";
+
 export const DEFAULT_COUNTRY = "Nepal";
 export const DEFAULT_COUNTRY_ROUTE = "nepal";
 export const DEFAULT_SITE_NAME = "AboutMySchool";
 export const DEFAULT_SITE_ORIGIN = "https://aboutmyschool.com";
 export const DIRECTORY_BRAND = DEFAULT_SITE_NAME;
 export const DIRECTORY_TAGLINE = "Nepal's educational directory";
+const FALLBACK_SITE_DESCRIPTION =
+  "AboutMySchool is Nepal's educational directory for schools, colleges, universities, technical institutes, and training centers with searchable profiles, affiliations, facilities, maps, photos, videos, and contact details.";
+const FALLBACK_SITE_KEYWORDS = Object.freeze([
+  "AboutMySchool Nepal",
+  "Nepal school directory",
+  "Nepal college directory",
+  "Nepal university directory",
+  "Nepal education directory",
+  "find schools in Nepal",
+  "find colleges in Nepal",
+  "school admission Nepal",
+  "college admission Nepal",
+  "विद्यालय खोज नेपाल",
+  "कलेज खोज नेपाल",
+  "नेपाल शिक्षा निर्देशिका",
+]);
+const FALLBACK_HOME_SEO_SECTIONS = Object.freeze([
+  {
+    title: "A complete education directory for Nepal",
+    body:
+      "AboutMySchool helps students, parents, teachers, and institutions discover educational institutes across Nepal with structured profiles that are easier to compare than scattered social media pages or outdated lists.",
+  },
+  {
+    title: "Admission-ready profiles in one place",
+    body:
+      "Each profile can include programs, affiliation, facilities, location, phone numbers, email, website, photos, videos, and map information so families can shortlist institutions faster before they call or visit.",
+  },
+  {
+    title: "Search by district, field, type, and affiliation",
+    body:
+      "The directory is built for fast filtering across provinces, districts, institute types, academic fields, education levels, and major affiliations such as TU, KU, PU, CTEVT, and NEB.",
+  },
+]);
+
 export const DEFAULT_SITE_DESCRIPTION =
-  "AboutMySchool is Nepal's online educational directory for schools, colleges, universities, technical institutes, and training centers with photos, videos, programs, facilities, maps, and contact details.";
+  String(GENERATED_SITE_DESCRIPTION || "").trim() || FALLBACK_SITE_DESCRIPTION;
+export const DEFAULT_SITE_KEYWORDS = Object.freeze(
+  Array.isArray(GENERATED_SITE_KEYWORDS) && GENERATED_SITE_KEYWORDS.length
+    ? GENERATED_SITE_KEYWORDS
+    : FALLBACK_SITE_KEYWORDS
+);
+export const DEFAULT_HOME_SEO_SECTIONS = Object.freeze(
+  Array.isArray(GENERATED_HOME_SEO_SECTIONS) && GENERATED_HOME_SEO_SECTIONS.length
+    ? GENERATED_HOME_SEO_SECTIONS
+    : FALLBACK_HOME_SEO_SECTIONS
+);
+
+const PAGE_TYPE_KEYWORDS = Object.freeze({
+  home: DEFAULT_SITE_KEYWORDS,
+  province: resolveGeneratedKeywords("province"),
+  district: resolveGeneratedKeywords("district"),
+  type: resolveGeneratedKeywords("type"),
+  field: resolveGeneratedKeywords("field"),
+  detail: resolveGeneratedKeywords("detail"),
+  affiliation: resolveGeneratedKeywords("affiliation"),
+});
 
 export const DEFAULT_FILTERS = Object.freeze({
   search: "",
@@ -217,6 +278,7 @@ export function buildPageSeoData({
   const safeFilteredCount = Number.isFinite(Number(filteredBusinessCount))
     ? Number(filteredBusinessCount)
     : 0;
+  const keywords = buildPageKeywords({ route, selectedBusiness, filters });
 
   if (selectedBusiness) {
     const title = [
@@ -241,6 +303,7 @@ export function buildPageSeoData({
       canonicalUrl,
       robots: "index,follow",
       image: selectedBusiness.cover || selectedBusiness.logo || "",
+      keywords,
     };
   }
 
@@ -287,6 +350,7 @@ export function buildPageSeoData({
       canonicalUrl,
       robots: "index,follow",
       image: "",
+      keywords,
     };
   }
 
@@ -306,6 +370,7 @@ export function buildPageSeoData({
       canonicalUrl,
       robots: "noindex,follow",
       image: "",
+      keywords,
     };
   }
 
@@ -315,6 +380,7 @@ export function buildPageSeoData({
     canonicalUrl,
     robots: "index,follow",
     image: "",
+    keywords,
   };
 }
 
@@ -639,6 +705,50 @@ function buildBusinessTitleSuffix(business) {
   return parts.join(" in ");
 }
 
+function buildPageKeywords({ route, selectedBusiness, filters }) {
+  const homeKeywords = PAGE_TYPE_KEYWORDS.home;
+
+  if (selectedBusiness) {
+    return mergeKeywords([
+      selectedBusiness.name,
+      `${selectedBusiness.name} Nepal`,
+      selectedBusiness.type
+        ? `${selectedBusiness.type} in ${selectedBusiness.district || DEFAULT_COUNTRY}`
+        : "",
+      selectedBusiness.affiliation
+        ? `${selectedBusiness.affiliation} affiliated institute`
+        : "",
+      `${selectedBusiness.name} contact`,
+      `${selectedBusiness.name} admission`,
+      ...PAGE_TYPE_KEYWORDS.detail,
+      ...PAGE_TYPE_KEYWORDS.affiliation.slice(0, 4),
+      ...homeKeywords.slice(0, 6),
+    ]);
+  }
+
+  if (route?.pageType && route.pageType !== "directory" && route.pageType !== "detail") {
+    const routeLabel = String(filters?.[route.pageType] || "").trim();
+    const pageKeywords =
+      PAGE_TYPE_KEYWORDS[route.pageType] || PAGE_TYPE_KEYWORDS.home;
+
+    return mergeKeywords([
+      buildRouteKeyword(route.pageType, routeLabel, "primary"),
+      buildRouteKeyword(route.pageType, routeLabel, "secondary"),
+      buildRouteKeyword(route.pageType, routeLabel, "tertiary"),
+      route.pageType === "province" || route.pageType === "district"
+        ? `${routeLabel} educational institutes`
+        : "",
+      route.pageType === "province" || route.pageType === "district"
+        ? `${routeLabel} education directory`
+        : "",
+      ...pageKeywords,
+      ...homeKeywords.slice(0, 4),
+    ]);
+  }
+
+  return mergeKeywords(homeKeywords);
+}
+
 function activeFilterCount(filters) {
   return ["type", "field", "level", "province", "district", "affiliation"].reduce(
     (count, key) => count + (filters[key] !== "all" ? 1 : 0),
@@ -721,4 +831,45 @@ function normalizeString(value) {
 
 function firstString(values) {
   return Array.isArray(values) ? values.map((value) => normalizeString(value)).find(Boolean) : undefined;
+}
+
+function buildRouteKeyword(routeType, label, variant) {
+  const safeLabel = String(label || "").trim();
+  if (!safeLabel) {
+    return "";
+  }
+
+  if (routeType === "type") {
+    return variant === "primary"
+      ? `${safeLabel} in Nepal`
+      : variant === "secondary"
+        ? `${safeLabel} directory Nepal`
+        : `${safeLabel} colleges Nepal`;
+  }
+
+  if (routeType === "field") {
+    return variant === "primary"
+      ? `${safeLabel} institutes Nepal`
+      : variant === "secondary"
+        ? `${safeLabel} college Nepal`
+        : `${safeLabel} education Nepal`;
+  }
+
+  return variant === "primary"
+    ? `schools in ${safeLabel}`
+    : variant === "secondary"
+      ? `colleges in ${safeLabel}`
+      : `education directory ${safeLabel}`;
+}
+
+function mergeKeywords(items, limit = 18) {
+  return [...new Set((items || []).map((item) => String(item || "").trim()).filter(Boolean))].slice(
+    0,
+    limit
+  );
+}
+
+function resolveGeneratedKeywords(key) {
+  const values = GENERATED_PAGE_TYPE_KEYWORDS?.[key];
+  return Array.isArray(values) && values.length ? values : [];
 }
