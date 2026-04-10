@@ -938,7 +938,8 @@ export default function App() {
 
                 <SectionBlock title="Overview">
                   <p className="body-copy">
-                    {selectedBusiness.description || buildAutoDescription(selectedBusiness)}
+                    {selectedBusiness.description ||
+                      "A concise profile is not available yet. The listing still includes its location, contact details, programs, and facilities."}
                   </p>
                   <div className="info-grid">
                     <InfoItem
@@ -1511,7 +1512,7 @@ function SeoTextBlock({ route, filters, filteredCount, sections }) {
           </p>
         </div>
         <div className="seo-text-item">
-          <h3>How to use the filters</h3>
+          <h2>How to use the filters</h2>
           <p>
             Narrow results further by province, district, education level, or
             affiliation. Use the search box to match by name, program, or address.
