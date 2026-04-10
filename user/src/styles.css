@@ -27,7 +27,7 @@ body,
 body {
   margin: 0;
   overflow-x: hidden;
-  font-family: "Manrope", "Avenir Next", sans-serif;
+  font-family: "Manrope", "Noto Sans Devanagari", "Avenir Next", sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at top left, rgba(106, 178, 255, 0.45), transparent 28%),
@@ -311,6 +311,38 @@ a {
   letter-spacing: -0.02em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.directory-ribbon-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.locale-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(24, 45, 77, 0.08);
+  border-radius: 999px;
+}
+
+.locale-switch-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.46rem 0.8rem;
+  border-radius: 999px;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.locale-switch-button.active {
+  color: #15469a;
+  background: rgba(226, 237, 255, 0.96);
 }
 
 .hero-copy {
@@ -934,6 +966,64 @@ a {
   border: 1px solid rgba(205, 170, 79, 0.26);
 }
 
+.page-context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.page-context-panel {
+  grid-column: 1 / -1;
+  padding: 1rem 1.05rem;
+  border-radius: var(--radius-xl);
+}
+
+.page-context-head h2 {
+  margin: 0;
+  font-size: 1.22rem;
+  letter-spacing: -0.035em;
+}
+
+.page-context-copy {
+  display: grid;
+  gap: 0.72rem;
+  margin-top: 0.9rem;
+}
+
+.page-context-copy p {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.68;
+}
+
+.page-context-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.page-context-fact {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.82rem 0.88rem;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(24, 45, 77, 0.08);
+  border-radius: 1rem;
+}
+
+.page-context-fact span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.page-context-fact strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
 .content-grid {
   position: relative;
   z-index: 1;
@@ -958,7 +1048,8 @@ a {
   margin-bottom: 0.95rem;
 }
 
-.homepage-panel-head h2 {
+.homepage-panel-head h2,
+.homepage-panel-head h3 {
   margin: 0;
   font-size: 1.1rem;
   letter-spacing: -0.03em;
@@ -2414,6 +2505,10 @@ a {
     padding: 0.64rem 0.85rem;
   }
 
+  .directory-ribbon-actions {
+    gap: 0.5rem;
+  }
+
   .directory-ribbon-status {
     flex-basis: 13rem;
     padding-inline: 0.62rem;
@@ -2633,6 +2728,7 @@ a {
     margin-top: 0.25rem;
     padding: 0.55rem 0.68rem;
     border-radius: 1rem;
+    flex-wrap: wrap;
   }
 
   .directory-ribbon-brand {
@@ -2670,6 +2766,15 @@ a {
 
   .directory-ribbon-status strong {
     font-size: 0.68rem;
+  }
+
+  .directory-ribbon-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .locale-switch {
+    margin-left: auto;
   }
 
   .hero-copy h1 {

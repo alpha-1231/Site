@@ -36,6 +36,7 @@ import {
 
 const BASIC_CACHE_KEY = "edudata-user-basic-v6";
 const SAVED_CACHE_KEY = "edudata-user-saved-v1";
+const LOCALE_STORAGE_KEY = "aboutmyschool-user-locale-v1";
 const RESULTS_PAGE_SIZE = 100;
 const APP_BASE_PATH = normalizeBasePath(import.meta.env.BASE_URL || "/");
 const SITE_NAME = String(import.meta.env.VITE_SITE_NAME || DEFAULT_SITE_NAME).trim() || DEFAULT_SITE_NAME;
@@ -60,6 +61,7 @@ export default function App() {
 
   const [businesses, setBusinesses] = useState(cachedBusinesses);
   const [savedSlugs, setSavedSlugs] = useState(() => readCache(SAVED_CACHE_KEY, [], "local"));
+  const [locale, setLocale] = useState(() => readPreferredLocale());
   const [selectedSlug, setSelectedSlug] = useState(() => getSelectedSlugFromLocation());
   const [selectedBusinessDetail, setSelectedBusinessDetail] = useState(null);
   const [activeVideo, setActiveVideo] = useState(null);
@@ -157,6 +159,15 @@ export default function App() {
       const legacyRedirectPath = buildLegacyRedirectPath(window.location.hash, APP_BASE_PATH);
       if (legacyRedirectPath) {
         window.history.replaceState(null, "", legacyRedirectPath);
+      }
+    } else if (route.legacyCountryPath) {
+      const replacementPath =
+        route.pageType === "detail" && route.selectedSlug
+          ? buildBusinessPath(route.selectedSlug, APP_BASE_PATH)
+          : buildListingRoute(nextFilters);
+      const currentUrl = `${window.location.pathname}${window.location.search}`;
+      if (replacementPath && currentUrl !== replacementPath) {
+        window.history.replaceState(null, "", replacementPath);
       }
     }
 
@@ -299,6 +310,14 @@ export default function App() {
   }, [selectedSlug, activeVideo]);
 
   useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale === "ne" ? "ne" : "en";
+    }
+
+    writePreferredLocale(locale);
+  }, [locale]);
+
+  useEffect(() => {
     if (typeof document === "undefined" || (!selectedSlug && !activeVideo)) {
       return undefined;
     }
@@ -352,12 +371,12 @@ export default function App() {
   );
   const syncStatusLabel =
     syncState === "syncing"
-      ? "Updating local cache"
+      ? t(locale, "updatingLocalCache")
       : syncState === "checking" && showSyncActivity
-        ? "Checking for updates"
+        ? t(locale, "checkingForUpdates")
         : lastSyncedAt
-          ? `Cached ${formatSyncTimestamp(lastSyncedAt)}`
-          : "Ready to browse";
+          ? t(locale, "cachedAt", { time: formatSyncTimestamp(lastSyncedAt, locale) })
+          : t(locale, "readyToBrowse");
   const selectedBusinessSummary = selectedSlug
     ? businesses.find((business) => business.slug === selectedSlug) || null
     : null;
@@ -377,10 +396,12 @@ export default function App() {
   );
   const currentYear = new Date().getFullYear();
   const footerCacheLabel =
-    syncStatusLabel === "Ready to browse"
-      ? "Directory cache becomes visible after the first successful sync."
-      : syncStatusLabel.startsWith("Cached ")
-        ? `Basic listings ${syncStatusLabel.toLowerCase()}.`
+    syncState === "idle" && !lastSyncedAt
+      ? t(locale, "cacheVisibleAfterSync")
+      : lastSyncedAt
+        ? t(locale, "basicListingsCached", {
+            time: formatSyncTimestamp(lastSyncedAt, locale),
+          })
         : `${syncStatusLabel}.`;
   const typeOptions = uniqueValues(businesses.map((business) => business.type));
   const fieldOptions = uniqueValues(businesses.flatMap((business) => business.field || []));
@@ -443,6 +464,17 @@ export default function App() {
   useEffect(() => {
     updateDocumentSeo(pageSeo, structuredData);
   }, [pageSeo, structuredData]);
+  const pageContext = buildPageContext({
+    locale,
+    route: currentSeoRoute,
+    selectedBusiness,
+    filteredBusinesses,
+    allBusinesses: businesses,
+    filteredBusinessCount,
+    totalBusinessCount: businesses.length,
+    provinceCount,
+    fieldCount,
+  });
 
   function handleSelectBusiness(slug) {
     setSelectedBusinessDetail(null);
@@ -566,20 +598,13 @@ export default function App() {
       <div className="app-frame">
         <section className="directory-intro glass-panel">
           <div className="directory-intro-copy">
-            <p className="eyebrow">aboutmyschool.com</p>
-            <h1>
-              Find schools, colleges, universities, technical institutes, and training centers
-              across Nepal.
-            </h1>
-            <p>
-              Compare programs, affiliation, facilities, location, contact details, photos,
-              videos, and complete public institute profiles in one searchable educational
-              directory.
-            </p>
+            <p className="eyebrow">{pageContext.eyebrow}</p>
+            <h1>{pageContext.title}</h1>
+            <p>{pageContext.description}</p>
           </div>
           <div className="directory-intro-pill">
-            <span>Live directory</span>
-            <strong>{businesses.length} active listings</strong>
+            <span>{pageContext.pillLabel}</span>
+            <strong>{pageContext.pillValue}</strong>
           </div>
         </section>
 
@@ -587,25 +612,45 @@ export default function App() {
           <div className="directory-ribbon-brand">
             <div className="directory-ribbon-copy">
               <strong>aboutmyschool.com</strong>
-              <span>{DIRECTORY_TAGLINE}</span>
+              <span>{t(locale, "directoryTagline")}</span>
             </div>
           </div>
-          <div className="directory-ribbon-status" aria-label="Directory status">
-            <span className="directory-ribbon-status-label">Status</span>
-            <strong title={syncStatusLabel}>{syncStatusLabel}</strong>
+          <div className="directory-ribbon-actions">
+            <div className="directory-ribbon-status" aria-label={t(locale, "directoryStatus")}>
+              <span className="directory-ribbon-status-label">{t(locale, "status")}</span>
+              <strong title={syncStatusLabel}>{syncStatusLabel}</strong>
+            </div>
+            <div className="locale-switch" role="group" aria-label={t(locale, "language")}>
+              <button
+                type="button"
+                className={`locale-switch-button ${locale === "en" ? "active" : ""}`}
+                onClick={() => setLocale("en")}
+                aria-pressed={locale === "en"}
+              >
+                {t(locale, "english")}
+              </button>
+              <button
+                type="button"
+                className={`locale-switch-button ${locale === "ne" ? "active" : ""}`}
+                onClick={() => setLocale("ne")}
+                aria-pressed={locale === "ne"}
+              >
+                {t(locale, "nepali")}
+              </button>
+            </div>
           </div>
         </header>
 
         <section className="toolbar glass-panel">
           <div className="toolbar-head">
             <div className="search-wrap">
-              <span className="search-hint">Search</span>
+              <span className="search-hint">{t(locale, "search")}</span>
               <input
                 className="search-input"
                 type="search"
                 value={filters.search}
                 onChange={(event) => handleFilterChange("search", event.target.value)}
-                placeholder="Search by name, district, field, program, or affiliation"
+                placeholder={t(locale, "searchPlaceholder")}
               />
             </div>
             <div className="toolbar-actions">
@@ -614,16 +659,24 @@ export default function App() {
                 className={`saved-filter-button ${filters.savedOnly ? "active" : ""}`}
                 onClick={() => handleFilterChange("savedOnly", !filters.savedOnly)}
                 aria-pressed={filters.savedOnly}
-                aria-label={filters.savedOnly ? "Show all institutes" : "Show saved institutes only"}
-                title={filters.savedOnly ? "Show all institutes" : "Show saved institutes only"}
+                aria-label={
+                  filters.savedOnly ? t(locale, "showAllInstitutes") : t(locale, "showSavedInstitutesOnly")
+                }
+                title={
+                  filters.savedOnly ? t(locale, "showAllInstitutes") : t(locale, "showSavedInstitutesOnly")
+                }
               >
                 <span className="saved-filter-icon" aria-hidden="true">
                   {renderActionIcon("bookmark")}
                 </span>
                 <span className="saved-filter-copy">
-                  <strong>Saved institutes</strong>
+                  <strong>{t(locale, "savedInstitutes")}</strong>
                   <small>
-                    {savedCount ? `${savedCount} saved on this device` : "No saved institutes yet"}
+                    {savedCount
+                      ? t(locale, "savedOnThisDevice", {
+                          count: formatLocaleNumber(locale, savedCount),
+                        })
+                      : t(locale, "noSavedInstitutesYet")}
                   </small>
                 </span>
               </button>
@@ -632,73 +685,118 @@ export default function App() {
                 className="ghost-button danger-button toolbar-reset-button"
                 type="button"
                 onClick={resetFilters}
-                aria-label="Reset filters"
-                title="Reset filters"
+                aria-label={t(locale, "resetFilters")}
+                title={t(locale, "resetFilters")}
               >
                 <span className="toolbar-action-icon" aria-hidden="true">
                   {renderActionIcon("reset")}
                 </span>
-                <span className="toolbar-action-label">Reset filters</span>
+                <span className="toolbar-action-label">{t(locale, "resetFilters")}</span>
               </button>
             </div>
           </div>
 
           <div className="toolbar-meta">
-            <span>{showResultsUpdateHint ? "Updating results..." : `${filteredBusinessCount} institutions`}</span>
-            <span>{savedCount} saved</span>
+            <span>
+              {showResultsUpdateHint
+                ? t(locale, "updatingResults")
+                : t(locale, "institutionsCount", {
+                    count: formatLocaleNumber(locale, filteredBusinessCount),
+                  })}
+            </span>
+            <span>{t(locale, "savedCount", { count: formatLocaleNumber(locale, savedCount) })}</span>
             <span>{DEFAULT_COUNTRY}</span>
-            <span>{provinceCount} provinces</span>
-            <span>{fieldCount} fields</span>
+            <span>{t(locale, "provincesCount", { count: formatLocaleNumber(locale, provinceCount) })}</span>
+            <span>{t(locale, "fieldsCount", { count: formatLocaleNumber(locale, fieldCount) })}</span>
             <span>{syncStatusLabel}</span>
           </div>
 
           <div className="filter-grid">
             <FilterSelect
-              label="Type"
+              label={t(locale, "type")}
               value={filters.type}
               onChange={(nextValue) => handleFilterChange("type", nextValue)}
               options={typeOptions}
-              emptyLabel="All types"
+              emptyLabel={t(locale, "allTypes")}
+              selectedLabel={t(locale, "selected")}
             />
             <FilterSelect
-              label="Field"
+              label={t(locale, "field")}
               value={filters.field}
               onChange={(nextValue) => handleFilterChange("field", nextValue)}
               options={fieldOptions}
-              emptyLabel="All fields"
+              emptyLabel={t(locale, "allFields")}
+              selectedLabel={t(locale, "selected")}
             />
             <FilterSelect
-              label="Level"
+              label={t(locale, "level")}
               value={filters.level}
               onChange={(nextValue) => handleFilterChange("level", nextValue)}
               options={levelOptions}
-              emptyLabel="All levels"
+              emptyLabel={t(locale, "allLevels")}
+              selectedLabel={t(locale, "selected")}
             />
             <FilterSelect
-              label="Province"
+              label={t(locale, "province")}
               value={filters.province}
               onChange={(nextValue) => handleFilterChange("province", nextValue)}
               options={provinceOptions}
-              emptyLabel="All provinces"
+              emptyLabel={t(locale, "allProvinces")}
+              selectedLabel={t(locale, "selected")}
             />
             <FilterSelect
-              label="District"
+              label={t(locale, "district")}
               value={filters.district}
               onChange={(nextValue) => handleFilterChange("district", nextValue)}
               options={districtOptions}
-              emptyLabel="All districts"
+              emptyLabel={t(locale, "allDistricts")}
+              selectedLabel={t(locale, "selected")}
             />
             <FilterSelect
-              label="Affiliation"
+              label={t(locale, "affiliation")}
               value={filters.affiliation}
               onChange={(nextValue) => handleFilterChange("affiliation", nextValue)}
               options={affiliationOptions}
-              emptyLabel="All affiliations"
+              emptyLabel={t(locale, "allAffiliations")}
+              selectedLabel={t(locale, "selected")}
             />
           </div>
         </section>
 
         {errorMessage ? <div className="status-banner">{errorMessage}</div> : null}
+
+        <section className="page-context-grid">
+          <section className="page-context-panel glass-panel">
+            <div className="page-context-head">
+              <div>
+                <p className="eyebrow">{t(locale, "pageOverview")}</p>
+                <h2>{pageContext.overviewTitle}</h2>
+              </div>
+            </div>
+            <div className="page-context-copy">
+              {pageContext.overviewParagraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+            <div className="page-context-facts">
+              {pageContext.statItems.map((item) => (
+                <div key={`${item.label}:${item.value}`} className="page-context-fact">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          </section>
+          {pageContext.browseSections.map((section) => (
+            <BrowseSection
+              key={section.title}
+              locale={locale}
+              title={section.title}
+              description={section.description}
+              links={section.links}
+            />
+          ))}
+        </section>
 
         <main className="content-grid">
           <section ref={resultsPaneRef} className={`results-pane ${showResultsUpdateHint ? "is-filtering" : ""}`}>
@@ -716,6 +814,7 @@ export default function App() {
                     <BusinessCard
                       key={business.slug}
                       business={business}
+                      locale={locale}
                       isSelected={business.slug === selectedSlug}
                       isSaved={savedSlugSet.has(business.slug)}
                       onSelect={handleSelectBusiness}
@@ -731,11 +830,16 @@ export default function App() {
                       onClick={() => changeResultsPage(-1)}
                       disabled={currentResultsPage === 1}
                     >
-                      Previous
+                      {t(locale, "previous")}
                     </button>
                     <div className="results-pagination-copy">
-                      Showing {pageStartIndex + 1}-{pageStartIndex + pagedBusinesses.length} of{" "}
-                      {filteredBusinessCount} on page {currentResultsPage}/{totalResultsPages}
+                      {t(locale, "paginationSummary", {
+                        start: formatLocaleNumber(locale, pageStartIndex + 1),
+                        end: formatLocaleNumber(locale, pageStartIndex + pagedBusinesses.length),
+                        total: formatLocaleNumber(locale, filteredBusinessCount),
+                        page: formatLocaleNumber(locale, currentResultsPage),
+                        pages: formatLocaleNumber(locale, totalResultsPages),
+                      })}
                     </div>
                     <button
                       type="button"
@@ -743,7 +847,7 @@ export default function App() {
                       onClick={() => changeResultsPage(1)}
                       disabled={currentResultsPage === totalResultsPages}
                     >
-                      Next
+                      {t(locale, "next")}
                     </button>
                   </div>
                 ) : null}
@@ -752,13 +856,13 @@ export default function App() {
               <div className="empty-panel glass-panel">
                 <h2>
                   {filters.savedOnly
-                    ? "No saved institutes match this filter set."
-                    : "No institutes match this filter set."}
+                    ? t(locale, "noSavedResultsTitle")
+                    : t(locale, "noResultsTitle")}
                 </h2>
                 <p>
                   {filters.savedOnly
-                    ? "Use the bookmark buttons to save institutes locally, then they will appear here."
-                    : "Try clearing one or two filters, or search with a district, level, or field."}
+                    ? t(locale, "noSavedResultsBody")
+                    : t(locale, "noResultsBody")}
                 </p>
               </div>
             )}
@@ -774,23 +878,23 @@ export default function App() {
                 </div>
                 <div className="app-footer-copy">
                   <strong>{DIRECTORY_BRAND}</strong>
-                  <p>{DIRECTORY_TAGLINE}</p>
+                  <p>{t(locale, "directoryTagline")}</p>
                 </div>
               </div>
               <p className="app-footer-note">
-                Search, save, and compare published institutions faster.
+                {t(locale, "footerNote")}
               </p>
             </div>
 
             <div className="app-footer-column">
-              <span className="app-footer-heading">Explore</span>
+              <span className="app-footer-heading">{t(locale, "explore")}</span>
               <div className="app-footer-links">
                 <button type="button" className="footer-link-button" onClick={handleBrowseDirectory}>
                   <span className="footer-link-icon" aria-hidden="true">
                     {renderActionIcon("institution")}
                   </span>
                   <span className="footer-link-copy">
-                    <strong>Browse directory</strong>
+                    <strong>{t(locale, "browseDirectory")}</strong>
                   </span>
                 </button>
                 <button
@@ -802,7 +906,7 @@ export default function App() {
                     {renderActionIcon("bookmark")}
                   </span>
                   <span className="footer-link-copy">
-                    <strong>Saved institutes</strong>
+                    <strong>{t(locale, "savedInstitutes")}</strong>
                   </span>
                 </button>
                 <button type="button" className="footer-link-button" onClick={resetFilters}>
@@ -810,30 +914,30 @@ export default function App() {
                     {renderActionIcon("reset")}
                   </span>
                   <span className="footer-link-copy">
-                    <strong>Reset filters</strong>
+                    <strong>{t(locale, "resetFilters")}</strong>
                   </span>
                 </button>
               </div>
             </div>
 
             <div className="app-footer-column">
-              <span className="app-footer-heading">Coverage</span>
+              <span className="app-footer-heading">{t(locale, "coverage")}</span>
               <div className="app-footer-metrics">
                 <div className="footer-metric">
-                  <strong>{businesses.length}</strong>
-                  <span>Active listings</span>
+                  <strong>{formatLocaleNumber(locale, businesses.length)}</strong>
+                  <span>{t(locale, "activeListings")}</span>
                 </div>
                 <div className="footer-metric">
-                  <strong>{provinceCount}</strong>
-                  <span>Provinces covered</span>
+                  <strong>{formatLocaleNumber(locale, provinceCount)}</strong>
+                  <span>{t(locale, "provincesCovered")}</span>
                 </div>
                 <div className="footer-metric">
-                  <strong>{fieldCount}</strong>
-                  <span>Fields represented</span>
+                  <strong>{formatLocaleNumber(locale, fieldCount)}</strong>
+                  <span>{t(locale, "fieldsRepresented")}</span>
                 </div>
                 <div className="footer-metric">
-                  <strong>{savedCount}</strong>
-                  <span>Saved on this device</span>
+                  <strong>{formatLocaleNumber(locale, savedCount)}</strong>
+                  <span>{t(locale, "savedOnDeviceShort")}</span>
                 </div>
               </div>
             </div>
@@ -841,11 +945,11 @@ export default function App() {
 
           <div className="app-footer-legal">
             <span>
-              &copy; {currentYear} {DIRECTORY_BRAND}. All rights reserved.
+              &copy; {currentYear} {DIRECTORY_BRAND}. {t(locale, "allRightsReserved")}
             </span>
             <span className="app-footer-country">
               <CountryFlagIcon countryName={DEFAULT_COUNTRY} className="app-footer-country-flag" />
-              <span>{DEFAULT_COUNTRY} public institution directory</span>
+              <span>{t(locale, "publicInstitutionDirectory")}</span>
             </span>
             <span>{footerCacheLabel}</span>
           </div>
@@ -871,12 +975,12 @@ export default function App() {
                   type="button"
                   className="detail-back-button"
                   onClick={closeDetail}
-                  aria-label="Back to results"
+                  aria-label={t(locale, "backToResults")}
                 >
                   <span className="button-icon" aria-hidden="true">
                     {renderActionIcon("back")}
                   </span>
-                  <span>Back</span>
+                  <span>{t(locale, "back")}</span>
                 </button>
                 <button
                   type="button"
@@ -886,13 +990,13 @@ export default function App() {
                   <span className="button-icon" aria-hidden="true">
                     {renderActionIcon("bookmark")}
                   </span>
-                  <span>{selectedBusinessIsSaved ? "Saved" : "Save"}</span>
+                  <span>{selectedBusinessIsSaved ? t(locale, "saved") : t(locale, "save")}</span>
                 </button>
               </section>
 
               <section className="detail-body">
                 {detailIsLoading ? (
-                  <div className="detail-loading">Loading the full profile.</div>
+                  <div className="detail-loading">{t(locale, "loadingFullProfile")}</div>
                 ) : null}
                 {detailErrorMessage ? (
                   <div className="detail-loading detail-error">{detailErrorMessage}</div>
@@ -911,7 +1015,7 @@ export default function App() {
                             <span className="card-certified-icon" aria-hidden="true">
                               ✓
                             </span>
-                            <span>Certified</span>
+                            <span>{t(locale, "certified")}</span>
                           </span>
                         ) : null}
                         {selectedBusiness.affiliation ? (
@@ -922,26 +1026,25 @@ export default function App() {
                   </div>
                 </header>
 
-                <SectionBlock title="Overview">
+                <SectionBlock title={t(locale, "overview")}>
                   <p className="body-copy">
-                    {selectedBusiness.description ||
-                      "A concise profile is not available yet. The listing still includes its location, contact details, programs, and facilities."}
+                    {buildReadableBusinessNarrative(locale, selectedBusiness)}
                   </p>
                   <div className="info-grid">
                     <InfoItem
-                      label="Affiliation"
-                      value={selectedBusiness.affiliation || "Not set"}
+                      label={t(locale, "affiliation")}
+                      value={selectedBusiness.affiliation || t(locale, "notSet")}
                     />
                     <InfoItem
-                      label="Levels"
-                      value={formatArray(selectedBusiness.level) || "Not set"}
+                      label={t(locale, "levels")}
+                      value={formatArray(selectedBusiness.level) || t(locale, "notSet")}
                     />
                     <InfoItem
-                      label="Fields"
-                      value={formatArray(selectedBusiness.field) || "Not set"}
+                      label={t(locale, "fields")}
+                      value={formatArray(selectedBusiness.field) || t(locale, "notSet")}
                     />
                     <InfoItem
-                      label="Programs"
+                      label={t(locale, "programs")}
                       value={String(
                         selectedBusiness.stats?.programs_count ||
                           selectedBusiness.programs?.length ||
@@ -951,57 +1054,58 @@ export default function App() {
                   </div>
                 </SectionBlock>
 
-                <SectionBlock title="Programs">
+                <SectionBlock title={t(locale, "programs")}>
                   <TagList
                     items={selectedBusiness.programs}
-                    emptyLabel="Programs have not been listed yet."
+                    emptyLabel={t(locale, "programsNotListed")}
                   />
                 </SectionBlock>
 
-                <SectionBlock title="Facilities">
+                <SectionBlock title={t(locale, "facilities")}>
                   <TagList
                     items={selectedBusiness.facilities}
-                    emptyLabel="Facilities have not been listed yet."
+                    emptyLabel={t(locale, "facilitiesNotListed")}
                   />
                 </SectionBlock>
 
-                <SectionBlock title="Location">
-                  <BusinessLocationSection business={selectedBusiness} />
+                <SectionBlock title={t(locale, "location")}>
+                  <BusinessLocationSection business={selectedBusiness} locale={locale} />
                 </SectionBlock>
 
-                <SectionBlock title="Gallery">
-                  <GallerySection items={selectedBusiness.media?.gallery} />
+                <SectionBlock title={t(locale, "gallery")}>
+                  <GallerySection items={selectedBusiness.media?.gallery} locale={locale} />
                 </SectionBlock>
 
-                <SectionBlock title="Videos">
+                <SectionBlock title={t(locale, "videos")}>
                   <VideoSection
                     items={selectedBusiness.media?.videos}
                     onOpenVideo={handleOpenVideo}
+                    locale={locale}
                   />
                 </SectionBlock>
 
-                <SectionBlock title="Contact">
+                <SectionBlock title={t(locale, "contact")}>
                   <div className="contact-stack">
                     <InfoItem
-                      label="Address"
-                      value={selectedBusiness.contact?.address || "Address not set"}
+                      label={t(locale, "address")}
+                      value={selectedBusiness.contact?.address || t(locale, "addressNotSet")}
                     />
                     <InfoItem
-                      label="Phone"
-                      value={formatArray(selectedBusiness.contact?.phone) || "Phone not set"}
+                      label={t(locale, "phone")}
+                      value={formatArray(selectedBusiness.contact?.phone) || t(locale, "phoneNotSet")}
                     />
                     <InfoItem
-                      label="Email"
-                      value={selectedBusiness.contact?.email || "Email not set"}
+                      label={t(locale, "email")}
+                      value={selectedBusiness.contact?.email || t(locale, "emailNotSet")}
                     />
                     <InfoItem
-                      label="Website"
-                      value={selectedBusiness.contact?.website || "Website not set"}
+                      label={t(locale, "website")}
+                      value={selectedBusiness.contact?.website || t(locale, "websiteNotSet")}
                     />
                   </div>
                   <div className="icon-action-row">
                     <IconActionLink
-                      label="Call"
+                      label={t(locale, "call")}
                       href={
                         getPrimaryPhone(selectedBusiness.contact?.phone)
                           ? `tel:${getPrimaryPhone(selectedBusiness.contact?.phone)}`
@@ -1010,7 +1114,7 @@ export default function App() {
                       icon="phone"
                     />
                     <IconActionLink
-                      label="Email"
+                      label={t(locale, "email")}
                       href={
                         selectedBusiness.contact?.email
                           ? `mailto:${selectedBusiness.contact.email}`
@@ -1019,7 +1123,7 @@ export default function App() {
                       icon="email"
                     />
                     <IconActionLink
-                      label="Website"
+                      label={t(locale, "website")}
                       href={
                         selectedBusiness.contact?.website
                           ? ensureUrl(selectedBusiness.contact.website)
@@ -1037,7 +1141,7 @@ export default function App() {
                   </div>
                 </SectionBlock>
 
-                <SectionBlock title="Social">
+                <SectionBlock title={t(locale, "social")}>
                   <div className="icon-action-row">
                     <IconActionLink
                       label="Facebook"
@@ -1100,14 +1204,14 @@ export default function App() {
                   </video>
                 ) : (
                   <div className="video-lightbox-fallback">
-                    <p>This video source cannot be played inside the popup.</p>
+                    <p>{t(locale, "videoPopupUnavailable")}</p>
                     <a
                       href={activeVideo.url}
                       target="_blank"
                       rel="noreferrer"
                       className="media-open-button"
                     >
-                      Open source
+                      {t(locale, "openSource")}
                     </a>
                   </div>
                 )}
@@ -1120,7 +1224,7 @@ export default function App() {
   );
 }
 
-function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }) {
+function BusinessCard({ business, locale, isSelected, isSaved, onSelect, onToggleSaved }) {
   const coverImage = getPreferredCoverImage(business);
   const address = getBusinessCardAddress(business);
   const phone = getPrimaryPhone(business.contact?.phone);
@@ -1135,7 +1239,11 @@ function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }
         type="button"
         className={`card-save-badge ${isSaved ? "saved" : ""}`}
         onClick={() => onToggleSaved(business.slug)}
-        aria-label={isSaved ? `Remove ${business.name} from saved` : `Save ${business.name}`}
+        aria-label={
+          isSaved
+            ? t(locale, "removeFromSaved", { name: business.name })
+            : t(locale, "saveBusiness", { name: business.name })
+        }
         aria-pressed={isSaved}
       >
         {renderActionIcon("bookmark")}
@@ -1146,7 +1254,13 @@ function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }
         onClick={(event) => handleInternalRouteClick(event, () => onSelect(business.slug))}
       >
         <div className="card-cover" style={{ background: buildGradient(business.slug) }}>
-          {isCertified ? <span className="card-certified-dot" aria-label="Physically certified" title="Physically certified" /> : null}
+          {isCertified ? (
+            <span
+              className="card-certified-dot"
+              aria-label={t(locale, "physicallyCertified")}
+              title={t(locale, "physicallyCertified")}
+            />
+          ) : null}
           {coverImage ? (
             <img
               className="card-cover-image"
@@ -1160,9 +1274,9 @@ function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }
 
         <div className="card-body card-body-compact">
           <div className="card-main">
-            <h2 className="card-title card-title-large" title={business.name}>
+            <h3 className="card-title card-title-large" title={business.name}>
               {business.name}
-            </h2>
+            </h3>
             <p className="card-address" title={address}>
               {address}
             </p>
@@ -1179,17 +1293,22 @@ function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }
           <span className="card-link-icon" aria-hidden="true">
             {renderActionIcon("open")}
           </span>
-          <span>Open</span>
+          <span>{t(locale, "open")}</span>
         </a>
-        <CardActionLink label="Call" href={phone ? `tel:${phone}` : ""} icon="phone" />
-        <CardActionLink label="Email" href={email ? `mailto:${email}` : ""} icon="email" />
-        <CardActionLink label="Website" href={website ? ensureUrl(website) : ""} icon="website" external />
+        <CardActionLink label={t(locale, "call")} href={phone ? `tel:${phone}` : ""} icon="phone" />
+        <CardActionLink label={t(locale, "email")} href={email ? `mailto:${email}` : ""} icon="email" />
+        <CardActionLink
+          label={t(locale, "website")}
+          href={website ? ensureUrl(website) : ""}
+          icon="website"
+          external
+        />
       </div>
     </article>
   );
 }
 
-function BrowseSection({ title, description, links }) {
+function BrowseSection({ locale, title, description, links }) {
   if (!links.length) {
     return null;
   }
@@ -1198,10 +1317,12 @@ function BrowseSection({ title, description, links }) {
     <section className="homepage-panel glass-panel">
       <div className="homepage-panel-head">
         <div>
-          <h2>{title}</h2>
+          <h3>{title}</h3>
           <p>{description}</p>
         </div>
-        <span className="homepage-panel-stat">{links.length} pages</span>
+        <span className="homepage-panel-stat">
+          {t(locale, "pagesCount", { count: formatLocaleNumber(locale, links.length) })}
+        </span>
       </div>
       <div className="browse-link-grid">
         {links.map((link) => (
@@ -1252,7 +1373,7 @@ function CardActionLink({ label, href, external = false, icon }) {
   );
 }
 
-function FilterSelect({ label, value, onChange, options, emptyLabel }) {
+function FilterSelect({ label, value, onChange, options, emptyLabel, selectedLabel }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
@@ -1325,7 +1446,7 @@ function FilterSelect({ label, value, onChange, options, emptyLabel }) {
               onClick={() => handleSelect(option.value)}
             >
               <span>{option.label}</span>
-              {value === option.value ? <strong>Selected</strong> : null}
+              {value === option.value ? <strong>{selectedLabel}</strong> : null}
             </button>
           ))}
         </div>
@@ -1355,10 +1476,10 @@ function TagList({ items, emptyLabel = "Nothing listed yet.", compact = false, l
   );
 }
 
-function GallerySection({ items }) {
+function GallerySection({ items, locale }) {
   const galleryItems = normalizeMediaList(items);
   if (!galleryItems.length) {
-    return <p className="muted">No gallery links have been added yet.</p>;
+    return <p className="muted">{t(locale, "noGalleryLinks")}</p>;
   }
 
   return (
@@ -1369,15 +1490,15 @@ function GallerySection({ items }) {
             <div key={item} className="media-card image-card">
               <img src={ensureUrl(item)} alt="Business gallery preview" loading="lazy" />
               <div className="media-card-body">
-                <strong>Image</strong>
-                <span>Open the full image in a new tab.</span>
+                <strong>{t(locale, "image")}</strong>
+                <span>{t(locale, "openFullImage")}</span>
                 <a
                   className="media-open-button"
                   href={ensureUrl(item)}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Open image
+                  {t(locale, "openImage")}
                 </a>
               </div>
             </div>
@@ -1394,7 +1515,7 @@ function GallerySection({ items }) {
               target="_blank"
               rel="noreferrer"
             >
-              Open gallery
+              {t(locale, "openGallery")}
             </a>
           </div>
         );
@@ -1403,10 +1524,10 @@ function GallerySection({ items }) {
   );
 }
 
-function VideoSection({ items, onOpenVideo }) {
+function VideoSection({ items, onOpenVideo, locale }) {
   const videos = normalizeVideoEntries(items);
   if (!videos.length) {
-    return <p className="muted">No videos have been added yet.</p>;
+    return <p className="muted">{t(locale, "noVideosYet")}</p>;
   }
 
   return (
@@ -1427,7 +1548,7 @@ function VideoSection({ items, onOpenVideo }) {
                   <span>{video.provider}</span>
                 </div>
               )}
-              <span className="video-play-badge">Play</span>
+              <span className="video-play-badge">{t(locale, "play")}</span>
             </div>
             <div className="video-preview-body">
               <strong>{video.title}</strong>
@@ -1473,11 +1594,11 @@ function SectionBlock({ title, children }) {
   );
 }
 
-function BusinessLocationSection({ business }) {
+function BusinessLocationSection({ business, locale }) {
   const mapInfo = getBusinessMapInfo(business);
 
   if (!mapInfo) {
-    return <p className="muted">Live map coordinates have not been added yet.</p>;
+    return <p className="muted">{t(locale, "noMapCoordinates")}</p>;
   }
 
   return (
@@ -1492,16 +1613,16 @@ function BusinessLocationSection({ business }) {
       </div>
       <div className="info-grid location-info-grid">
         <InfoItem
-          label="Coordinates"
+          label={t(locale, "coordinates")}
           value={`${formatCoordinate(mapInfo.lat)}, ${formatCoordinate(mapInfo.lng)}`}
         />
         <InfoItem
-          label="Coverage"
-          value={business.location_label || business.district || "Location not set"}
+          label={t(locale, "coverageLabel")}
+          value={business.location_label || business.district || t(locale, "locationNotSet")}
         />
       </div>
       <div className="icon-action-row location-actions">
-        <IconActionLink label="Open Map" href={mapInfo.openUrl} icon="map" external />
+        <IconActionLink label={t(locale, "openMap")} href={mapInfo.openUrl} icon="map" external />
       </div>
     </div>
   );
@@ -1747,7 +1868,7 @@ function syncBusinessRoute(slug, { replace = false, filters = null } = {}) {
   window.history.pushState(null, "", nextUrl);
 }
 
-function buildBrowseLinkGroups(businesses, routeKey, getValue, limit) {
+function buildBrowseLinkGroups(businesses, routeKey, getValue, limit, locale = "en") {
   const counts = new Map();
 
   for (const business of businesses) {
@@ -1769,13 +1890,548 @@ function buildBrowseLinkGroups(businesses, routeKey, getValue, limit) {
       label,
       count,
       href: buildCollectionPath(routeKey, label, APP_BASE_PATH),
-      description:
-        routeKey === "field"
-          ? `View ${count} active institutes covering ${label}.`
-          : routeKey === "type"
-            ? `Open the Nepal ${label.toLowerCase()} directory page.`
-            : `Explore ${count} active institutes in ${label}.`,
+      description: buildBrowseLinkDescription(locale, routeKey, label, count),
     }));
+}
+
+function buildPageContext({
+  locale,
+  route,
+  selectedBusiness,
+  filteredBusinesses,
+  allBusinesses,
+  filteredBusinessCount,
+  totalBusinessCount,
+  provinceCount,
+  fieldCount,
+}) {
+  if (route?.pageType === "detail") {
+    return buildDetailPageContext({
+      locale,
+      route,
+      selectedBusiness,
+      allBusinesses,
+    });
+  }
+
+  if (route?.pageType && route.pageType !== "directory") {
+    return buildCollectionPageContext({
+      locale,
+      route,
+      filteredBusinesses,
+      filteredBusinessCount,
+      totalBusinessCount,
+    });
+  }
+
+  return buildHomePageContext({
+    locale,
+    allBusinesses,
+    totalBusinessCount,
+    provinceCount,
+    fieldCount,
+  });
+}
+
+function buildHomePageContext({ locale, allBusinesses, totalBusinessCount, provinceCount, fieldCount }) {
+  const districtCount = uniqueValues(allBusinesses.map((business) => business.district)).length;
+
+  return {
+    eyebrow: "aboutmyschool.com",
+    title:
+      locale === "ne"
+        ? "नेपालभरिका विद्यालय, कलेज र शैक्षिक संस्थाहरू खोज्नुहोस्"
+        : "Find schools, colleges, and educational institutes across Nepal.",
+    description:
+      locale === "ne"
+        ? "कार्यक्रम, सम्बन्धन, सुविधा, स्थान, सम्पर्क, फोटो र भिडियो सहितका सार्वजनिक प्रोफाइल एउटै डाइरेक्टरीमा तुलना गर्नुहोस्।"
+        : "Compare programs, affiliation, facilities, location, contact details, photos, videos, and public institute profiles in one searchable directory.",
+    pillLabel: t(locale, "liveDirectory"),
+    pillValue: t(locale, "activeListingsCount", {
+      count: formatLocaleNumber(locale, totalBusinessCount),
+    }),
+    overviewTitle: locale === "ne" ? "डाइरेक्टरी किन उपयोगी छ" : "Why this directory helps",
+    overviewParagraphs: [
+      locale === "ne"
+        ? `${formatLocaleNumber(locale, totalBusinessCount)} वटा सक्रिय सूची, ${formatLocaleNumber(locale, provinceCount)} वटा प्रदेश र ${formatLocaleNumber(locale, districtCount)} वटा जिल्लाबाट सार्वजनिक संस्थाहरू अहिले उपलब्ध छन्।`
+        : `${formatLocaleNumber(locale, totalBusinessCount)} active listings are currently published across ${formatLocaleNumber(locale, provinceCount)} provinces and ${formatLocaleNumber(locale, districtCount)} districts.`,
+      locale === "ne"
+        ? "अभिभावक, विद्यार्थी र संस्थाहरूले अलग-अलग सामाजिक सञ्जाल वा पुराना सूची हेर्नु पर्ने झन्झट बिना एउटै स्थानबाट तुलना गर्न सकून् भनेर यो पेज तयार गरिएको हो।"
+        : "This page is designed so families and students can compare institutions without jumping between scattered social posts or outdated lists.",
+      locale === "ne"
+        ? "प्रकार, क्षेत्र, तह, जिल्ला वा सम्बन्धनका आधारमा नतिजा साँघुर्याउन सकिन्छ, र नयाँ व्यवसायहरू थपिएपछि पुनःबिल्ड हुँदा यिनै संरचनामा नयाँ पेजहरू स्वतः अपडेट हुन्छन्।"
+        : "You can narrow results by type, field, level, district, or affiliation, and future listings inherit the same structure automatically when the site rebuilds.",
+    ],
+    statItems: [
+      { label: t(locale, "activeListings"), value: formatLocaleNumber(locale, totalBusinessCount) },
+      { label: t(locale, "provincesCovered"), value: formatLocaleNumber(locale, provinceCount) },
+      { label: t(locale, "districtsCovered"), value: formatLocaleNumber(locale, districtCount) },
+      { label: t(locale, "fieldsRepresented"), value: formatLocaleNumber(locale, fieldCount) },
+    ],
+    browseSections: [
+      {
+        title: locale === "ne" ? "प्रदेशअनुसार हेर्नुहोस्" : "Browse by province",
+        description:
+          locale === "ne"
+            ? "प्रदेश-स्तरका पेजहरूले मुख्य स्थानीय सूचीहरू द्रुत रूपमा खोल्छन्।"
+            : "Province pages group the strongest regional listing coverage.",
+        links: buildBrowseLinkGroups(
+          allBusinesses,
+          "province",
+          (business) => business.province_name || business.province,
+          6,
+          locale
+        ),
+      },
+      {
+        title: locale === "ne" ? "जिल्लाअनुसार हेर्नुहोस्" : "Browse by district",
+        description:
+          locale === "ne"
+            ? "नजिकका विकल्प खोज्न जिल्ला पेजहरू उपयोगी हुन्छन्।"
+            : "District pages are useful when users want nearby options first.",
+        links: buildBrowseLinkGroups(allBusinesses, "district", (business) => business.district, 6, locale),
+      },
+      {
+        title: locale === "ne" ? "प्रकारअनुसार हेर्नुहोस्" : "Browse by institute type",
+        description:
+          locale === "ne"
+            ? "विद्यालय, कलेज वा अन्य प्रकारका सूचीहरू छुट्याएर तुलना गर्नुहोस्।"
+            : "Type pages make it easier to compare similar institutions.",
+        links: buildBrowseLinkGroups(allBusinesses, "type", (business) => business.type, 6, locale),
+      },
+      {
+        title: locale === "ne" ? "विषयक्षेत्रअनुसार हेर्नुहोस्" : "Browse by field",
+        description:
+          locale === "ne"
+            ? "एउटै अध्ययन क्षेत्रसँग सम्बन्धित संस्थाहरूलाई केन्द्रित रूपमा खोल्नुहोस्।"
+            : "Field pages help users focus on one study area at a time.",
+        links: buildBrowseLinkGroups(allBusinesses, "field", (business) => business.field || [], 6, locale),
+      },
+    ].filter((section) => section.links.length),
+  };
+}
+
+function buildCollectionPageContext({
+  locale,
+  route,
+  filteredBusinesses,
+  filteredBusinessCount,
+  totalBusinessCount,
+}) {
+  const label = resolveRouteLabel(route, filteredBusinesses);
+  const coverage = {
+    provinces: uniqueValues(filteredBusinesses.map((business) => business.province_name || business.province)).length,
+    districts: uniqueValues(filteredBusinesses.map((business) => business.district)).length,
+    types: uniqueValues(filteredBusinesses.map((business) => business.type)).length,
+    fields: uniqueValues(filteredBusinesses.flatMap((business) => business.field || [])).length,
+  };
+  const countLabel = formatLocaleNumber(locale, filteredBusinessCount);
+
+  return {
+    eyebrow: buildCollectionEyebrow(locale, route.pageType),
+    title: buildCollectionRuntimeTitle(locale, route.pageType, label),
+    description: buildCollectionRuntimeDescription(locale, route.pageType, label, filteredBusinessCount),
+    pillLabel: locale === "ne" ? "सूची पेज" : "Collection page",
+    pillValue:
+      locale === "ne"
+        ? `${countLabel} परिणाम`
+        : `${countLabel} matching listings`,
+    overviewTitle: locale === "ne" ? "यस पेजको सन्दर्भ" : "What this page covers",
+    overviewParagraphs: [
+      locale === "ne"
+        ? `यो पेजले ${label} सँग सम्बन्धित ${countLabel} वटा सक्रिय सार्वजनिक सूचीहरू एउटै ठाउँमा समूहबद्ध गर्छ।`
+        : `This page groups ${countLabel} active public listings related to ${label} in one place.`,
+      locale === "ne"
+        ? "प्रयोगकर्ताले पेज छोड्न नपरी थप फिल्टरहरू प्रयोग गरेर क्षेत्र, तह र सम्बन्धन अनुसार नतिजा सानो बनाउन सक्छन्।"
+        : "Users can narrow the results further by field, level, and affiliation without leaving the page.",
+      locale === "ne"
+        ? `डाइरेक्टरीमा अझ धेरै डेटा थपिएपछि पुनःबिल्ड हुँदा यो संरचनाले नयाँ ${label} सम्बन्धित सूचीहरू पनि स्वतः समेट्छ।`
+        : `As the directory grows, future rebuilds will keep the same structure and absorb new ${label} listings automatically.`,
+      filteredBusinessCount < totalBusinessCount
+        ? locale === "ne"
+          ? "तलका सम्बन्धित पेजहरू प्रयोग गरेर अर्को जिल्ला, प्रदेश, प्रकार वा विषयक्षेत्रमा जान सकिन्छ।"
+          : "Use the related browse panels below to move to nearby districts, provinces, types, or fields."
+        : locale === "ne"
+          ? "यो पेजले उपलब्ध सार्वजनिक सूचीहरूको प्रमुख भाग समेट्छ।"
+          : "This page already covers a broad slice of the public directory.",
+    ],
+    statItems: [
+      { label: t(locale, "listings"), value: countLabel },
+      { label: t(locale, "types"), value: formatLocaleNumber(locale, coverage.types) },
+      { label: t(locale, "districtsCovered"), value: formatLocaleNumber(locale, coverage.districts) },
+      { label: t(locale, "fieldsRepresented"), value: formatLocaleNumber(locale, coverage.fields) },
+      { label: t(locale, "provincesCovered"), value: formatLocaleNumber(locale, coverage.provinces) },
+    ].filter((item, index, items) => item.value !== "0" || index === 0).slice(0, 4),
+    browseSections: buildCollectionBrowseSections(locale, route.pageType, filteredBusinesses),
+  };
+}
+
+function buildDetailPageContext({ locale, route, selectedBusiness, allBusinesses }) {
+  const business = selectedBusiness;
+  if (!business) {
+    const label = humanizeRouteSlug(route?.selectedSlug || "");
+    return {
+      eyebrow: locale === "ne" ? "संस्था प्रोफाइल" : "Institution profile",
+      title: label || (locale === "ne" ? "संस्था प्रोफाइल" : "Institution profile"),
+      description:
+        locale === "ne"
+          ? "यो संस्थाको विस्तृत सार्वजनिक प्रोफाइल लोड भइरहेको छ।"
+          : "The detailed public profile for this institution is loading.",
+      pillLabel: locale === "ne" ? "प्रोफाइल" : "Profile",
+      pillValue: locale === "ne" ? "लोड हुँदैछ" : "Loading",
+      overviewTitle: locale === "ne" ? "पेज सारांश" : "Page summary",
+      overviewParagraphs: [
+        locale === "ne"
+          ? "सम्पूर्ण डाइरेक्टरी सूची उपलब्ध भएपछि यस पेजमा संस्था सम्बन्धी विवरण, स्थान, सम्पर्क र अन्य सार्वजनिक जानकारी देखिन्छ।"
+          : "Once the directory data is available, this page shows the institution details, location, contact information, and other public fields.",
+      ],
+      statItems: [],
+      browseSections: [],
+    };
+  }
+
+  const districtCount = business.district
+    ? allBusinesses.filter((item) => item.district === business.district).length
+    : 0;
+  const typeCount = business.type
+    ? allBusinesses.filter((item) => item.type === business.type).length
+    : 0;
+
+  return {
+    eyebrow: locale === "ne" ? "संस्था प्रोफाइल" : "Institution profile",
+    title: business.name,
+    description: buildDetailRuntimeDescription(locale, business),
+    pillLabel: locale === "ne" ? "प्रोफाइल प्रकार" : "Profile type",
+    pillValue: business.type || (locale === "ne" ? "शैक्षिक संस्था" : "Educational institute"),
+    overviewTitle: locale === "ne" ? "यस संस्थाको झलक" : "Why this profile matters",
+    overviewParagraphs: buildDetailOverviewParagraphs(locale, business),
+    statItems: [
+      { label: t(locale, "type"), value: business.type || t(locale, "notSet") },
+      { label: t(locale, "affiliation"), value: business.affiliation || t(locale, "notSet") },
+      { label: t(locale, "levels"), value: formatArray(business.level) || t(locale, "notSet") },
+      {
+        label: t(locale, "location"),
+        value: [business.district, business.province_name].filter(Boolean).join(", ") || t(locale, "locationNotSet"),
+      },
+    ],
+    browseSections: [
+      {
+        title: locale === "ne" ? "यस्तै पेजहरू" : "Continue exploring",
+        description:
+          locale === "ne"
+            ? "यस संस्थासँग सम्बन्धित जिल्ला वा प्रकार पेजमा फर्किन सकिन्छ।"
+            : "Jump back into the broader directory from this profile.",
+        links: [
+          business.district
+            ? {
+                label: business.district,
+                count: districtCount,
+                href: buildCollectionPath("district", business.district, APP_BASE_PATH),
+                description: buildBrowseLinkDescription(locale, "district", business.district, districtCount),
+              }
+            : null,
+          business.type
+            ? {
+                label: business.type,
+                count: typeCount,
+                href: buildCollectionPath("type", business.type, APP_BASE_PATH),
+                description: buildBrowseLinkDescription(locale, "type", business.type, typeCount),
+              }
+            : null,
+        ].filter(Boolean),
+      },
+    ].filter((section) => section.links.length),
+  };
+}
+
+function buildCollectionBrowseSections(locale, routeKey, businesses) {
+  const sectionConfigs = {
+    province: [
+      {
+        title: locale === "ne" ? "यस प्रदेशका प्रमुख जिल्लाहरू" : "Popular districts in this province",
+        description:
+          locale === "ne"
+            ? "प्रदेशभित्रका स्थानीय पेजहरू छिटो खोल्नुहोस्।"
+            : "Open the strongest district landing pages in this province.",
+        key: "district",
+        getValue: (business) => business.district,
+      },
+      {
+        title: locale === "ne" ? "यस प्रदेशका संस्था प्रकार" : "Institute types in this province",
+        description:
+          locale === "ne"
+            ? "यो प्रदेशभित्रका विद्यालय, कलेज र अन्य प्रकार छुट्याएर हेर्नुहोस्।"
+            : "Split this province by institute type for cleaner comparisons.",
+        key: "type",
+        getValue: (business) => business.type,
+      },
+    ],
+    district: [
+      {
+        title: locale === "ne" ? "यस जिल्लाका संस्था प्रकार" : "Institute types in this district",
+        description:
+          locale === "ne"
+            ? "जिल्लाभित्रका प्रकारगत विकल्पहरू तुलना गर्नुहोस्।"
+            : "Compare the main categories available in this district.",
+        key: "type",
+        getValue: (business) => business.type,
+      },
+      {
+        title: locale === "ne" ? "यस जिल्लाका विषयक्षेत्र" : "Fields linked to this district",
+        description:
+          locale === "ne"
+            ? "अध्ययन क्षेत्रका आधारमा स्थानीय विकल्पहरू हेर्नुहोस्।"
+            : "Use field pages to focus on one study area within the district.",
+        key: "field",
+        getValue: (business) => business.field || [],
+      },
+    ],
+    type: [
+      {
+        title: locale === "ne" ? "यस प्रकारका जिल्लाहरू" : "Districts with these listings",
+        description:
+          locale === "ne"
+            ? "यो प्रकारका संस्थाहरू धेरै भएका जिल्लाहरू खोल्नुहोस्।"
+            : "See where this type has the strongest geographic coverage.",
+        key: "district",
+        getValue: (business) => business.district,
+      },
+      {
+        title: locale === "ne" ? "यस प्रकारका विषयक्षेत्र" : "Fields linked to this type",
+        description:
+          locale === "ne"
+            ? "यो प्रकारसँग सम्बन्धित अध्ययन क्षेत्रहरूबाट थप पेजहरू खोल्नुहोस्।"
+            : "Move from this type page into related study fields.",
+        key: "field",
+        getValue: (business) => business.field || [],
+      },
+    ],
+    field: [
+      {
+        title: locale === "ne" ? "यस विषयक्षेत्रका जिल्लाहरू" : "Districts with this field",
+        description:
+          locale === "ne"
+            ? "यो क्षेत्र पढाइ हुने जिल्लाहरू खोज्नुहोस्।"
+            : "Open district pages where this field appears most often.",
+        key: "district",
+        getValue: (business) => business.district,
+      },
+      {
+        title: locale === "ne" ? "यस विषयक्षेत्रका संस्था प्रकार" : "Institute types for this field",
+        description:
+          locale === "ne"
+            ? "यो क्षेत्रसँग सम्बन्धित विद्यालय, कलेज वा अन्य प्रकारका पेजहरू हेर्नुहोस्।"
+            : "Split this field into the main institute categories.",
+        key: "type",
+        getValue: (business) => business.type,
+      },
+    ],
+  }[routeKey] || [];
+
+  return sectionConfigs
+    .map((section) => ({
+      title: section.title,
+      description: section.description,
+      links: buildBrowseLinkGroups(businesses, section.key, section.getValue, 6, locale),
+    }))
+    .filter((section) => section.links.length);
+}
+
+function buildBrowseLinkDescription(locale, routeKey, label, count) {
+  const countLabel = formatLocaleNumber(locale, count);
+  if (locale === "ne") {
+    if (routeKey === "field") {
+      return `${label} सँग सम्बन्धित ${countLabel} वटा सक्रिय सूची हेर्नुहोस्।`;
+    }
+    if (routeKey === "type") {
+      return `${label} प्रकारका पेजमा ${countLabel} वटा सूची खोल्नुहोस्।`;
+    }
+    return `${label} मा रहेका ${countLabel} वटा सक्रिय सूची हेर्नुहोस्।`;
+  }
+
+  if (routeKey === "field") {
+    return `View ${countLabel} active institutes covering ${label}.`;
+  }
+  if (routeKey === "type") {
+    return `Open the ${label.toLowerCase()} directory page with ${countLabel} listings.`;
+  }
+  return `Explore ${countLabel} active institutes in ${label}.`;
+}
+
+function buildCollectionEyebrow(locale, routeKey) {
+  if (locale === "ne") {
+    return routeKey === "type"
+      ? "प्रकार पेज"
+      : routeKey === "field"
+        ? "विषयक्षेत्र पेज"
+        : "स्थान पेज";
+  }
+
+  return routeKey === "type"
+    ? "Type page"
+    : routeKey === "field"
+      ? "Field page"
+      : "Location page";
+}
+
+function buildCollectionRuntimeTitle(locale, routeKey, label) {
+  if (locale === "ne") {
+    if (routeKey === "type") {
+      return `नेपालका ${label} सम्बन्धी संस्थाहरू`;
+    }
+    if (routeKey === "field") {
+      return `${label} सम्बन्धी संस्थाहरू`;
+    }
+    return `${label}, नेपालका शैक्षिक संस्थाहरू`;
+  }
+
+  if (routeKey === "type") {
+    return `${pluralizeTypeLabel(label)} in Nepal`;
+  }
+  if (routeKey === "field") {
+    return `${label} institutes in Nepal`;
+  }
+  return `Educational institutes in ${label}, Nepal`;
+}
+
+function buildCollectionRuntimeDescription(locale, routeKey, label, count) {
+  const countLabel = formatLocaleNumber(locale, count);
+  if (locale === "ne") {
+    if (routeKey === "type") {
+      return `${label} प्रकारका ${countLabel} वटा सक्रिय सार्वजनिक सूचीहरू यस पेजमा समेटिएका छन्।`;
+    }
+    if (routeKey === "field") {
+      return `${label} विषयक्षेत्रसँग सम्बन्धित ${countLabel} वटा सक्रिय सूचीहरू यस पेजमा उपलब्ध छन्।`;
+    }
+    return `${label} क्षेत्रमा रहेका ${countLabel} वटा सक्रिय सार्वजनिक शैक्षिक सूचीहरू यस पेजमा उपलब्ध छन्।`;
+  }
+
+  if (routeKey === "type") {
+    return `${countLabel} active public ${label.toLowerCase()} listings are grouped on this page.`;
+  }
+  if (routeKey === "field") {
+    return `${countLabel} active public listings linked to ${label} are grouped on this page.`;
+  }
+  return `${countLabel} active public educational listings in ${label} are grouped on this page.`;
+}
+
+function buildDetailRuntimeDescription(locale, business) {
+  const location = [business.district, business.province_name].filter(Boolean).join(", ");
+  const safeType = business.type || (locale === "ne" ? "शैक्षिक संस्था" : "educational institute");
+
+  if (locale === "ne") {
+    return `${business.name} ${location ? `${location} मा रहेको ` : ""}${safeType} हो। यस पेजमा सम्पर्क, कार्यक्रम, सुविधा, नक्सा र सार्वजनिक प्रोफाइल विवरण एउटै ठाउँमा देखाइन्छ।`;
+  }
+
+  return `${business.name} is an ${safeType.toLowerCase()}${location ? ` in ${location}` : ""}. This page brings its contact details, programs, facilities, map, and public profile details together in one place.`;
+}
+
+function buildDetailOverviewParagraphs(locale, business) {
+  const lines = [];
+  const location = [business.district, business.province_name].filter(Boolean).join(", ");
+  const levels = formatArray(business.level);
+  const fields = formatArray(business.field);
+  const facilities = formatArray((business.facilities || []).slice(0, 4));
+
+  if (locale === "ne") {
+    lines.push(
+      `${business.name}${location ? ` ${location}` : ""} मा रहेको सार्वजनिक प्रोफाइल भएको शैक्षिक सूची हो।`
+    );
+    lines.push(
+      "सूचीमा सम्पर्क विवरण, वेबसाइट, कार्यक्रम, सुविधा, फोटो, भिडियो र नक्सा उपलब्ध भएमा एउटै पेजमा देखाइन्छ।"
+    );
+    if (levels) {
+      lines.push(`यसले ${levels} तहसँग सम्बन्धित जानकारी समेट्छ।`);
+    }
+    if (fields) {
+      lines.push(`विषयक्षेत्रका रूपमा ${fields} उल्लेख गरिएको छ।`);
+    }
+    if (facilities) {
+      lines.push(`उपलब्ध सुविधामा ${facilities} समावेश छन्।`);
+    }
+    return lines;
+  }
+
+  lines.push(
+    `${business.name}${location ? ` in ${location}` : ""} has a public profile page inside the Nepal directory.`
+  );
+  lines.push(
+    "When the data is available, the page keeps contact details, website, programs, facilities, photos, videos, and map access together for faster comparison."
+  );
+  if (levels) {
+    lines.push(`The profile currently covers ${levels}.`);
+  }
+  if (fields) {
+    lines.push(`Listed study fields include ${fields}.`);
+  }
+  if (facilities) {
+    lines.push(`Highlighted facilities include ${facilities}.`);
+  }
+  return lines;
+}
+
+function buildReadableBusinessNarrative(locale, business) {
+  const narrative = buildDetailOverviewParagraphs(locale, business).slice(0, 2).join(" ");
+  if (narrative) {
+    return narrative;
+  }
+
+  return t(locale, "detailFallbackDescription");
+}
+
+function resolveRouteLabel(route, businesses) {
+  if (!route?.pageType || route.pageType === "directory" || route.pageType === "detail") {
+    return "";
+  }
+
+  const first = businesses[0];
+  if (!first) {
+    return humanizeRouteSlug(route.listingSlug);
+  }
+
+  if (route.pageType === "province") {
+    return first.province_name || first.province || humanizeRouteSlug(route.listingSlug);
+  }
+  if (route.pageType === "district") {
+    return first.district || humanizeRouteSlug(route.listingSlug);
+  }
+  if (route.pageType === "type") {
+    return first.type || humanizeRouteSlug(route.listingSlug);
+  }
+  if (route.pageType === "field") {
+    return first.field?.find((item) => normalizeRouteSlug(item) === route.listingSlug) || humanizeRouteSlug(route.listingSlug);
+  }
+
+  return humanizeRouteSlug(route.listingSlug);
+}
+
+function humanizeRouteSlug(value) {
+  return String(value || "")
+    .trim()
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function pluralizeTypeLabel(label) {
+  const safeLabel = String(label || "").trim();
+  if (!safeLabel) {
+    return "Institutes";
+  }
+  if (/school$/i.test(safeLabel)) {
+    return safeLabel.replace(/school$/i, "Schools");
+  }
+  if (/college$/i.test(safeLabel)) {
+    return safeLabel.replace(/college$/i, "Colleges");
+  }
+  if (/university$/i.test(safeLabel)) {
+    return safeLabel.replace(/university$/i, "Universities");
+  }
+  if (/s$/i.test(safeLabel)) {
+    return safeLabel;
+  }
+  return `${safeLabel}s`;
 }
 
 function handleInternalRouteClick(event, onNavigate) {
@@ -2003,30 +2659,316 @@ function uniqueValues(values) {
   );
 }
 
-function formatSyncTimestamp(value) {
+const UI_TEXT = Object.freeze({
+  en: {
+    updatingLocalCache: "Updating local cache",
+    checkingForUpdates: "Checking for updates",
+    cachedAt: "Cached {time}",
+    readyToBrowse: "Ready to browse",
+    cacheVisibleAfterSync: "Directory cache becomes visible after the first successful sync.",
+    basicListingsCached: "Basic listings cached {time}.",
+    directoryTagline: DIRECTORY_TAGLINE,
+    directoryStatus: "Directory status",
+    status: "Status",
+    language: "Language",
+    english: "English",
+    nepali: "Nepali",
+    search: "Search",
+    searchPlaceholder: "Search by name, district, field, program, or affiliation",
+    liveDirectory: "Live directory",
+    activeListingsCount: "{count} active listings",
+    showAllInstitutes: "Show all institutes",
+    showSavedInstitutesOnly: "Show saved institutes only",
+    savedInstitutes: "Saved institutes",
+    noSavedInstitutesYet: "No saved institutes yet",
+    savedOnThisDevice: "{count} saved on this device",
+    resetFilters: "Reset filters",
+    updatingResults: "Updating results...",
+    institutionsCount: "{count} institutions",
+    savedCount: "{count} saved",
+    provincesCount: "{count} provinces",
+    fieldsCount: "{count} fields",
+    type: "Type",
+    field: "Field",
+    fields: "Fields",
+    level: "Level",
+    province: "Province",
+    district: "District",
+    affiliation: "Affiliation",
+    allTypes: "All types",
+    allFields: "All fields",
+    allLevels: "All levels",
+    allProvinces: "All provinces",
+    allDistricts: "All districts",
+    allAffiliations: "All affiliations",
+    selected: "Selected",
+    pageOverview: "Page overview",
+    previous: "Previous",
+    next: "Next",
+    paginationSummary: "Showing {start}-{end} of {total} on page {page}/{pages}",
+    noSavedResultsTitle: "No saved institutes match this filter set.",
+    noResultsTitle: "No institutes match this filter set.",
+    noSavedResultsBody: "Use the bookmark buttons to save institutes locally, then they will appear here.",
+    noResultsBody: "Try clearing one or two filters, or search with a district, level, or field.",
+    footerNote: "Search, save, and compare published institutions faster.",
+    explore: "Explore",
+    browseDirectory: "Browse directory",
+    coverage: "Coverage",
+    activeListings: "Active listings",
+    provincesCovered: "Provinces covered",
+    districtsCovered: "Districts covered",
+    fieldsRepresented: "Fields represented",
+    savedOnDeviceShort: "Saved on this device",
+    allRightsReserved: "All rights reserved.",
+    publicInstitutionDirectory: "Nepal public institution directory",
+    backToResults: "Back to results",
+    back: "Back",
+    save: "Save",
+    saved: "Saved",
+    loadingFullProfile: "Loading the full profile.",
+    certified: "Certified",
+    overview: "Overview",
+    levels: "Levels",
+    location: "Location",
+    gallery: "Gallery",
+    videos: "Videos",
+    contact: "Contact",
+    social: "Social",
+    detailFallbackDescription:
+      "A concise profile is not available yet. The listing still includes its location, contact details, programs, and facilities.",
+    notSet: "Not set",
+    programs: "Programs",
+    programsNotListed: "Programs have not been listed yet.",
+    facilities: "Facilities",
+    facilitiesNotListed: "Facilities have not been listed yet.",
+    address: "Address",
+    addressNotSet: "Address not set",
+    phone: "Phone",
+    phoneNotSet: "Phone not set",
+    email: "Email",
+    emailNotSet: "Email not set",
+    website: "Website",
+    websiteNotSet: "Website not set",
+    call: "Call",
+    open: "Open",
+    openSource: "Open source",
+    videoPopupUnavailable: "This video source cannot be played inside the popup.",
+    coordinates: "Coordinates",
+    coverageLabel: "Coverage",
+    locationNotSet: "Location not set",
+    openMap: "Open map",
+    noMapCoordinates: "Live map coordinates have not been added yet.",
+    openImage: "Open image",
+    openGallery: "Open gallery",
+    noGalleryLinks: "No gallery links have been added yet.",
+    image: "Image",
+    openFullImage: "Open the full image in a new tab.",
+    noVideosYet: "No videos have been added yet.",
+    play: "Play",
+    removeFromSaved: "Remove {name} from saved",
+    saveBusiness: "Save {name}",
+    physicallyCertified: "Physically certified",
+    listings: "Listings",
+    types: "Types",
+    pagesCount: "{count} pages",
+    recently: "recently",
+    justNow: "just now",
+  },
+  ne: {
+    updatingLocalCache: "स्थानीय क्यास अद्यावधिक हुँदैछ",
+    checkingForUpdates: "अद्यावधिक जाँच हुँदैछ",
+    cachedAt: "{time} मा क्यास गरिएको",
+    readyToBrowse: "हेर्न तयार",
+    cacheVisibleAfterSync: "पहिलो सफल समक्रमणपछि डाइरेक्टरी क्यास देखिन्छ।",
+    basicListingsCached: "आधारभूत सूचीहरू {time} मा क्यास गरियो।",
+    directoryTagline: "नेपालको शैक्षिक निर्देशिका",
+    directoryStatus: "डाइरेक्टरी स्थिति",
+    status: "स्थिति",
+    language: "भाषा",
+    english: "English",
+    nepali: "नेपाली",
+    search: "खोज",
+    searchPlaceholder: "नाम, जिल्ला, विषयक्षेत्र, कार्यक्रम वा सम्बन्धनबाट खोज्नुहोस्",
+    liveDirectory: "लाइभ डाइरेक्टरी",
+    activeListingsCount: "{count} सक्रिय सूची",
+    showAllInstitutes: "सबै संस्था देखाउनुहोस्",
+    showSavedInstitutesOnly: "सुरक्षित संस्थाहरू मात्र देखाउनुहोस्",
+    savedInstitutes: "सुरक्षित संस्थाहरू",
+    noSavedInstitutesYet: "अहिलेसम्म कुनै संस्था सुरक्षित गरिएको छैन",
+    savedOnThisDevice: "यो उपकरणमा {count} सुरक्षित",
+    resetFilters: "फिल्टर रिसेट गर्नुहोस्",
+    updatingResults: "नतिजा अद्यावधिक हुँदैछ...",
+    institutionsCount: "{count} संस्था",
+    savedCount: "{count} सुरक्षित",
+    provincesCount: "{count} प्रदेश",
+    fieldsCount: "{count} विषयक्षेत्र",
+    type: "प्रकार",
+    field: "विषयक्षेत्र",
+    fields: "विषयक्षेत्र",
+    level: "तह",
+    province: "प्रदेश",
+    district: "जिल्ला",
+    affiliation: "सम्बन्धन",
+    allTypes: "सबै प्रकार",
+    allFields: "सबै विषयक्षेत्र",
+    allLevels: "सबै तह",
+    allProvinces: "सबै प्रदेश",
+    allDistricts: "सबै जिल्ला",
+    allAffiliations: "सबै सम्बन्धन",
+    selected: "चयन गरिएको",
+    pageOverview: "पेज सारांश",
+    previous: "अघिल्लो",
+    next: "अर्को",
+    paginationSummary: "{page}/{pages} पेजमा {total} मध्ये {start}-{end} देखाइँदै",
+    noSavedResultsTitle: "यो फिल्टरमा कुनै सुरक्षित संस्था भेटिएन।",
+    noResultsTitle: "यो फिल्टरमा कुनै संस्था भेटिएन।",
+    noSavedResultsBody: "बुकमार्क बटन प्रयोग गरेर संस्था सुरक्षित गर्नुहोस्, त्यसपछि यहाँ देखिनेछ।",
+    noResultsBody: "एक वा दुई फिल्टर हटाउनुहोस्, वा जिल्ला, तह वा विषयक्षेत्रबाट खोज्नुहोस्।",
+    footerNote: "प्रकाशित संस्थाहरू छिटो खोज्न, सुरक्षित गर्न र तुलना गर्न मद्दत गर्दछ।",
+    explore: "अन्वेषण",
+    browseDirectory: "डाइरेक्टरी हेर्नुहोस्",
+    coverage: "समेटिएको क्षेत्र",
+    activeListings: "सक्रिय सूची",
+    provincesCovered: "समेटिएका प्रदेश",
+    districtsCovered: "समेटिएका जिल्ला",
+    fieldsRepresented: "समेटिएका विषयक्षेत्र",
+    savedOnDeviceShort: "यो उपकरणमा सुरक्षित",
+    allRightsReserved: "सबै अधिकार सुरक्षित।",
+    publicInstitutionDirectory: "नेपाल सार्वजनिक संस्था निर्देशिका",
+    backToResults: "नतिजामा फर्कनुहोस्",
+    back: "फिर्ता",
+    save: "सुरक्षित गर्नुहोस्",
+    saved: "सुरक्षित",
+    loadingFullProfile: "पूरा प्रोफाइल लोड हुँदैछ।",
+    certified: "प्रमाणित",
+    overview: "सारांश",
+    levels: "तहहरू",
+    location: "स्थान",
+    gallery: "ग्यालरी",
+    videos: "भिडियोहरू",
+    contact: "सम्पर्क",
+    social: "सामाजिक सञ्जाल",
+    detailFallbackDescription:
+      "संक्षिप्त प्रोफाइल उपलब्ध छैन, तर स्थान, सम्पर्क, कार्यक्रम र सुविधाहरू अझै सूचीमा समावेश छन्।",
+    notSet: "सेट गरिएको छैन",
+    programs: "कार्यक्रमहरू",
+    programsNotListed: "कार्यक्रमहरू अझै सूचीबद्ध छैनन्।",
+    facilities: "सुविधाहरू",
+    facilitiesNotListed: "सुविधाहरू अझै सूचीबद्ध छैनन्।",
+    address: "ठेगाना",
+    addressNotSet: "ठेगाना छैन",
+    phone: "फोन",
+    phoneNotSet: "फोन छैन",
+    email: "इमेल",
+    emailNotSet: "इमेल छैन",
+    website: "वेबसाइट",
+    websiteNotSet: "वेबसाइट छैन",
+    call: "कल",
+    open: "खोल्नुहोस्",
+    openSource: "स्रोत खोल्नुहोस्",
+    videoPopupUnavailable: "यो भिडियो पपअपभित्र चलाउन सकिँदैन।",
+    coordinates: "निर्देशांक",
+    coverageLabel: "कभरेज",
+    locationNotSet: "स्थान छैन",
+    openMap: "नक्सा खोल्नुहोस्",
+    noMapCoordinates: "लाइभ नक्सा निर्देशांक थपिएको छैन।",
+    openImage: "तस्बिर खोल्नुहोस्",
+    openGallery: "ग्यालरी खोल्नुहोस्",
+    noGalleryLinks: "ग्यालरी लिङ्कहरू अझै थपिएका छैनन्।",
+    image: "तस्बिर",
+    openFullImage: "पूरा तस्बिर नयाँ ट्याबमा खोल्नुहोस्।",
+    noVideosYet: "भिडियोहरू अझै थपिएका छैनन्।",
+    play: "चलाउनुहोस्",
+    removeFromSaved: "{name} सुरक्षित सूचीबाट हटाउनुहोस्",
+    saveBusiness: "{name} सुरक्षित गर्नुहोस्",
+    physicallyCertified: "भौतिक रूपमा प्रमाणित",
+    listings: "सूचीहरू",
+    types: "प्रकारहरू",
+    pagesCount: "{count} पेज",
+    recently: "हालै",
+    justNow: "अहिले",
+  },
+});
+
+function formatSyncTimestamp(value, locale = "en") {
   const parsed = value ? new Date(value) : null;
   if (!parsed || Number.isNaN(parsed.getTime())) {
-    return "recently";
+    return t(locale, "recently");
   }
 
   const now = Date.now();
   const diffMs = now - parsed.getTime();
+  const formatter = new Intl.RelativeTimeFormat(getLocaleTag(locale), {
+    numeric: "auto",
+  });
 
   if (diffMs < 60_000) {
-    return "just now";
+    return t(locale, "justNow");
   }
   if (diffMs < 3_600_000) {
-    return `${Math.max(1, Math.round(diffMs / 60_000))} min ago`;
+    return formatter.format(-Math.max(1, Math.round(diffMs / 60_000)), "minute");
   }
   if (diffMs < 86_400_000) {
-    return `${Math.max(1, Math.round(diffMs / 3_600_000))} hr ago`;
+    return formatter.format(-Math.max(1, Math.round(diffMs / 3_600_000)), "hour");
   }
 
-  return parsed.toLocaleDateString("en-US", {
+  return parsed.toLocaleDateString(getLocaleTag(locale), {
     month: "short",
     day: "numeric",
     year: parsed.getFullYear() === new Date().getFullYear() ? undefined : "numeric",
   });
+}
+
+function formatLocaleNumber(locale, value) {
+  const safeNumber = Number.isFinite(Number(value)) ? Number(value) : 0;
+  return new Intl.NumberFormat(getLocaleTag(locale)).format(safeNumber);
+}
+
+function resolveLocale(value) {
+  return String(value || "").toLowerCase().startsWith("ne") ? "ne" : "en";
+}
+
+function getLocaleTag(locale) {
+  return resolveLocale(locale) === "ne" ? "ne-NP" : "en-US";
+}
+
+function t(locale, key, params = {}) {
+  const normalizedLocale = resolveLocale(locale);
+  const template =
+    UI_TEXT[normalizedLocale]?.[key] ??
+    UI_TEXT.en[key] ??
+    key;
+
+  return String(template).replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
+}
+
+function readPreferredLocale() {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  try {
+    const savedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (savedLocale) {
+      return resolveLocale(savedLocale);
+    }
+  } catch {
+    // Ignore storage errors.
+  }
+
+  return resolveLocale(window.navigator?.language || "en");
+}
+
+function writePreferredLocale(locale) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, resolveLocale(locale));
+  } catch {
+    // Ignore storage errors.
+  }
 }
 
 function normalizeRouteSlug(value) {

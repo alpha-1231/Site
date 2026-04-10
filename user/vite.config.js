@@ -8,6 +8,7 @@ import {
 } from "./src/directory-records.js";
 import {
   DEFAULT_COUNTRY,
+  DEFAULT_COUNTRY_ROUTE,
   DEFAULT_SITE_NAME,
   DEFAULT_SITE_ORIGIN,
   buildBusinessPath,
@@ -1061,9 +1062,15 @@ function buildStaticHeadersFile() {
 function buildStaticRedirectsFile(homePath, fallbackFile) {
   const lines = [];
   const normalizedHomePath = normalizeCanonicalPath(homePath);
-  if (normalizedHomePath !== "/") {
-    lines.push(`/ ${normalizedHomePath} 308`);
-  }
+  const legacyCountryPrefix =
+    normalizedHomePath === "/"
+      ? `/${DEFAULT_COUNTRY_ROUTE}`
+      : `${normalizedHomePath.replace(/\/$/, "")}/${DEFAULT_COUNTRY_ROUTE}`;
+  const legacyDestinationPrefix = normalizedHomePath === "/" ? "/" : normalizedHomePath;
+
+  lines.push(`${legacyCountryPrefix} ${normalizedHomePath} 308`);
+  lines.push(`${legacyCountryPrefix}/ ${normalizedHomePath} 308`);
+  lines.push(`${legacyCountryPrefix}/* ${legacyDestinationPrefix}:splat 308`);
   lines.push(`/* ${fallbackFile || "/index.html"} 200`);
   lines.push("");
   return lines.join("\n");

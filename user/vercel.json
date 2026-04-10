@@ -7,8 +7,18 @@
   "trailingSlash": true,
   "redirects": [
     {
-      "source": "/",
-      "destination": "/nepal/",
+      "source": "/nepal",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/:path*",
+      "destination": "/:path*",
       "permanent": true
     }
   ],

@@ -124,42 +124,53 @@ export function normalizeSiteOrigin(value) {
 }
 
 export function parseLocationRoute(pathname, hash, basePath) {
-  const segments = getRouteSegments(pathname, basePath);
+  const rawSegments = getRouteSegments(pathname, basePath);
+  const legacyCountryPath = normalizeRouteSlug(rawSegments[0]) === DEFAULT_COUNTRY_ROUTE;
+  const segments = legacyCountryPath ? rawSegments.slice(1) : rawSegments;
   if (!segments.length && hash) {
     const legacyRoute = parseLegacyHashRoute(hash);
     if (legacyRoute) {
       return {
         ...legacyRoute,
         legacyHash: true,
+        legacyCountryPath,
       };
     }
   }
 
-  if (normalizeRouteSlug(segments[0]) !== DEFAULT_COUNTRY_ROUTE) {
-    return createHomeRoute();
+  if (!segments.length) {
+    return {
+      ...createHomeRoute(),
+      legacyCountryPath,
+    };
   }
 
-  if (normalizeText(segments[1]) === "institutions") {
+  if (normalizeText(segments[0]) === "institutions") {
     return {
       pageType: "detail",
-      selectedSlug: normalizeRouteSlug(segments[2]),
+      selectedSlug: normalizeRouteSlug(segments[1]),
       listingKey: "",
       listingSlug: "",
       legacyHash: false,
+      legacyCountryPath,
     };
   }
 
-  if (INDEXABLE_ROUTE_KEYS.has(normalizeText(segments[1]))) {
+  if (INDEXABLE_ROUTE_KEYS.has(normalizeText(segments[0]))) {
     return {
-      pageType: normalizeText(segments[1]),
+      pageType: normalizeText(segments[0]),
       selectedSlug: "",
-      listingKey: normalizeText(segments[1]),
-      listingSlug: normalizeRouteSlug(segments[2]),
+      listingKey: normalizeText(segments[0]),
+      listingSlug: normalizeRouteSlug(segments[1]),
       legacyHash: false,
+      legacyCountryPath,
     };
   }
 
-  return createHomeRoute();
+  return {
+    ...createHomeRoute(),
+    legacyCountryPath,
+  };
 }
 
 export function createHomeRoute() {
@@ -173,7 +184,7 @@ export function createHomeRoute() {
 }
 
 export function buildHomePath(basePath = "/") {
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/`);
+  return appendBasePath(basePath, `/`);
 }
 
 export function buildBusinessPath(slug, basePath = "/") {
@@ -182,7 +193,7 @@ export function buildBusinessPath(slug, basePath = "/") {
     return buildHomePath(basePath);
   }
 
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/institutions/${normalizedSlug}/`);
+  return appendBasePath(basePath, `/institutions/${normalizedSlug}/`);
 }
 
 export function buildCollectionPath(routeKey, slug, basePath = "/") {
@@ -192,7 +203,7 @@ export function buildCollectionPath(routeKey, slug, basePath = "/") {
     return buildHomePath(basePath);
   }
 
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/${normalizedKey}/${normalizedSlug}/`);
+  return appendBasePath(basePath, `/${normalizedKey}/${normalizedSlug}/`);
 }
 
 export function buildListingUrl(filters, basePath = "/") {
@@ -395,7 +406,7 @@ export function buildPageSeoData({
   }
 
   return {
-    title: `${safeSiteName} Nepal Directory`,
+    title: `${safeSiteName} Nepal Education Directory`,
     description: buildHomeSeoDescription(safeSiteName),
     canonicalUrl,
     robots: "index,follow",
