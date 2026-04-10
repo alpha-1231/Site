@@ -9,7 +9,45 @@
       "source": "/",
       "destination": "/nepal/",
       "permanent": true,
-      "trailingSlash": true
+      "trailingSlash": true,
+      "redirects": [
+        {
+          "source": "/nepal",
+          "destination": "/",
+          "permanent": true
+        },
+        {
+          "source": "/nepal/institutions/:slug",
+          "destination": "/institutions/:slug",
+          "permanent": true
+        },
+        {
+          "source": "/nepal/province/:slug",
+          "destination": "/province/:slug",
+          "permanent": true
+        },
+        {
+          "source": "/nepal/district/:slug",
+          "destination": "/district/:slug",
+          "permanent": true
+        },
+        {
+          "source": "/nepal/type/:slug",
+          "destination": "/type/:slug",
+          "permanent": true
+        },
+        {
+          "source": "/nepal/field/:slug",
+          "destination": "/field/:slug",
+          "permanent": true
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
     }
   ],
   "headers": [

@@ -123,38 +123,37 @@ export function normalizeSiteOrigin(value) {
   }
 }
 
+// AFTER
 export function parseLocationRoute(pathname, hash, basePath) {
-  const segments = getRouteSegments(pathname, basePath);
+  let segments = getRouteSegments(pathname, basePath);
+
   if (!segments.length && hash) {
     const legacyRoute = parseLegacyHashRoute(hash);
-    if (legacyRoute) {
-      return {
-        ...legacyRoute,
-        legacyHash: true,
-      };
-    }
+    if (legacyRoute) return { ...legacyRoute, legacyHash: true };
   }
 
-  if (normalizeRouteSlug(segments[0]) !== DEFAULT_COUNTRY_ROUTE) {
-    return createHomeRoute();
+  // Strip legacy /nepal/ prefix transparently so old Google-indexed
+  // URLs keep working until your server-side 301s take over.
+  if (normalizeRouteSlug(segments[0]) === DEFAULT_COUNTRY_ROUTE) {
+    segments = segments.slice(1);
   }
 
-  if (normalizeText(segments[1]) === "institutions") {
+  if (normalizeText(segments[0]) === "institutions") {
     return {
       pageType: "detail",
-      selectedSlug: normalizeRouteSlug(segments[2]),
+      selectedSlug: normalizeRouteSlug(segments[1]),
       listingKey: "",
       listingSlug: "",
       legacyHash: false,
     };
   }
 
-  if (INDEXABLE_ROUTE_KEYS.has(normalizeText(segments[1]))) {
+  if (INDEXABLE_ROUTE_KEYS.has(normalizeText(segments[0]))) {
     return {
-      pageType: normalizeText(segments[1]),
+      pageType: normalizeText(segments[0]),
       selectedSlug: "",
-      listingKey: normalizeText(segments[1]),
-      listingSlug: normalizeRouteSlug(segments[2]),
+      listingKey: normalizeText(segments[0]),
+      listingSlug: normalizeRouteSlug(segments[1]),
       legacyHash: false,
     };
   }
@@ -172,27 +171,43 @@ export function createHomeRoute() {
   };
 }
 
+// export function buildHomePath(basePath = "/") {
+//   return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/`);
+// }
+
+// export function buildBusinessPath(slug, basePath = "/") {
+//   const normalizedSlug = normalizeRouteSlug(slug);
+//   if (!normalizedSlug) {
+//     return buildHomePath(basePath);
+//   }
+
+//   return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/institutions/${normalizedSlug}/`);
+// }
+
+// export function buildCollectionPath(routeKey, slug, basePath = "/") {
+//   const normalizedKey = normalizeText(routeKey);
+//   const normalizedSlug = normalizeRouteSlug(slug);
+//   if (!INDEXABLE_ROUTE_KEYS.has(normalizedKey) || !normalizedSlug) {
+//     return buildHomePath(basePath);
+//   }
+
+//   return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/${normalizedKey}/${normalizedSlug}/`);
+// }
 export function buildHomePath(basePath = "/") {
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/`);
+  return appendBasePath(basePath, "/");
 }
 
 export function buildBusinessPath(slug, basePath = "/") {
   const normalizedSlug = normalizeRouteSlug(slug);
-  if (!normalizedSlug) {
-    return buildHomePath(basePath);
-  }
-
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/institutions/${normalizedSlug}/`);
+  if (!normalizedSlug) return buildHomePath(basePath);
+  return appendBasePath(basePath, `/institutions/${normalizedSlug}/`);
 }
 
 export function buildCollectionPath(routeKey, slug, basePath = "/") {
   const normalizedKey = normalizeText(routeKey);
   const normalizedSlug = normalizeRouteSlug(slug);
-  if (!INDEXABLE_ROUTE_KEYS.has(normalizedKey) || !normalizedSlug) {
-    return buildHomePath(basePath);
-  }
-
-  return appendBasePath(basePath, `/${DEFAULT_COUNTRY_ROUTE}/${normalizedKey}/${normalizedSlug}/`);
+  if (!INDEXABLE_ROUTE_KEYS.has(normalizedKey) || !normalizedSlug) return buildHomePath(basePath);
+  return appendBasePath(basePath, `/${normalizedKey}/${normalizedSlug}/`);
 }
 
 export function buildListingUrl(filters, basePath = "/") {
@@ -395,7 +410,7 @@ export function buildPageSeoData({
   }
 
   return {
-    title: `${safeSiteName} Nepal Directory`,
+    title: composeSeoTitle("Nepal Schools & Colleges Directory", safeSiteName),
     description: buildHomeSeoDescription(safeSiteName),
     canonicalUrl,
     robots: "index,follow",
@@ -746,15 +761,22 @@ function buildBusinessSeoDescription(business, siteName) {
   return truncateDescription(`${lead} ${followUp}`, SEO_DESCRIPTION_LIMIT);
 }
 
+// AFTER
 function buildCollectionSeoTitle(routeType, label, siteName) {
   const safeLabel = normalizeString(label) || "Institutes";
   if (routeType === "type") {
-    return composeSeoTitle(`${pluralizeLabel(safeLabel)} in Nepal`, siteName);
+    return composeSeoTitle(`${pluralizeLabel(safeLabel)} in Nepal – Full Directory`, siteName);
   }
   if (routeType === "field") {
-    return composeSeoTitle(`${safeLabel} Institutes`, siteName);
+    return composeSeoTitle(`${safeLabel} Colleges & Institutes in Nepal`, siteName);
   }
-  return composeSeoTitle(`${safeLabel} Institutes`, siteName);
+  if (routeType === "province") {
+    return composeSeoTitle(`Schools & Colleges in ${safeLabel} Province`, siteName);
+  }
+  if (routeType === "district") {
+    return composeSeoTitle(`Educational Institutes in ${safeLabel} District`, siteName);
+  }
+  return composeSeoTitle(`${safeLabel} Educational Institutes Nepal`, siteName);
 }
 
 function buildCollectionSeoDescription(routeType, label, count, siteName) {

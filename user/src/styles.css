@@ -3454,3 +3454,25 @@ a {
     grid-template-columns: 1fr;
   }
 }
+.seo-text-block {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+  padding: 2rem 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.seo-text-item h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--text-primary, #111);
+}
+
+.seo-text-item p {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text-muted, #555);
+  margin: 0;
+}
