@@ -438,6 +438,7 @@ export default function App() {
     route: currentSeoRoute,
     selectedBusiness: seoBusiness,
     filters: appliedFilters,
+    filteredBusinessCount,
   });
   useEffect(() => {
     updateDocumentSeo(pageSeo, structuredData);
