@@ -45,6 +45,25 @@ const PROVINCE_NAMES = {
   "6": "Karnali",
   "7": "Sudurpashchim",
 };
+const PUBLIC_SECURITY_HEADERS = [
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; connect-src 'self' https:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+];
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, __dirname, "");
@@ -721,6 +740,7 @@ function writeStaticHostSupportFiles(distDir) {
   fs.writeFileSync(path.join(distDir, ".htaccess"), buildApacheFallbackFile(), "utf8");
   fs.writeFileSync(path.join(distDir, "web.config"), buildIisFallbackFile(), "utf8");
   fs.writeFileSync(path.join(distDir, "_redirects"), "/* /index.html 200\n", "utf8");
+  fs.writeFileSync(path.join(distDir, "_headers"), buildStaticHeadersFile(), "utf8");
 }
 
 function buildApacheFallbackFile() {
@@ -756,6 +776,14 @@ function buildIisFallbackFile() {
     "    </rewrite>",
     "  </system.webServer>",
     "</configuration>",
+    "",
+  ].join("\n");
+}
+
+function buildStaticHeadersFile() {
+  return [
+    "/*",
+    ...PUBLIC_SECURITY_HEADERS.map((header) => `  ${header.key}: ${header.value}`),
     "",
   ].join("\n");
 }

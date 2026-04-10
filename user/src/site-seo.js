@@ -8,7 +8,7 @@ import {
 export const DEFAULT_COUNTRY = "Nepal";
 export const DEFAULT_COUNTRY_ROUTE = "nepal";
 export const DEFAULT_SITE_NAME = "AboutMySchool";
-export const DEFAULT_SITE_ORIGIN = "https://aboutmyschool.com";
+export const DEFAULT_SITE_ORIGIN = "https://www.aboutmyschool.com";
 export const DIRECTORY_BRAND = DEFAULT_SITE_NAME;
 export const DIRECTORY_TAGLINE = "Nepal's educational directory";
 const FALLBACK_SITE_DESCRIPTION =
@@ -251,6 +251,42 @@ export function buildCanonicalUrl(siteOrigin, path) {
   return new URL(normalizeCanonicalPath(path), normalizeSiteOrigin(siteOrigin)).toString();
 }
 
+export function buildCanonicalPagePath({
+  basePath = "/",
+  route = createHomeRoute(),
+  selectedBusiness = null,
+  filters = cloneDefaultFilters(),
+}) {
+  if (selectedBusiness?.slug) {
+    return buildBusinessPath(selectedBusiness.slug, basePath);
+  }
+
+  if (route?.pageType === "detail" && route?.selectedSlug) {
+    return buildBusinessPath(route.selectedSlug, basePath);
+  }
+
+  const normalizedFilters = normalizeFilters(filters);
+  const indexableRoute = deriveIndexableRouteFromFilters(normalizedFilters);
+  if (indexableRoute.listingKey && normalizedFilters[indexableRoute.listingKey] !== "all") {
+    return buildCollectionPath(
+      indexableRoute.listingKey,
+      normalizedFilters[indexableRoute.listingKey],
+      basePath
+    );
+  }
+
+  const fallbackRoute = deriveNavigableRouteFromFilters(normalizedFilters);
+  if (fallbackRoute.listingKey && normalizedFilters[fallbackRoute.listingKey] !== "all") {
+    return buildCollectionPath(
+      fallbackRoute.listingKey,
+      normalizedFilters[fallbackRoute.listingKey],
+      basePath
+    );
+  }
+
+  return buildHomePath(basePath);
+}
+
 export function normalizeCanonicalPath(value) {
   const normalized = String(value || "/")
     .trim()
@@ -266,13 +302,14 @@ export function buildPageSeoData({
   siteName = DEFAULT_SITE_NAME,
   siteOrigin = DEFAULT_SITE_ORIGIN,
   pagePath = "/",
+  canonicalPath = "",
   route = createHomeRoute(),
   selectedBusiness = null,
   filters = cloneDefaultFilters(),
   filteredBusinessCount = 0,
   totalBusinessCount = 0,
 }) {
-  const canonicalUrl = buildCanonicalUrl(siteOrigin, pagePath);
+  const canonicalUrl = buildCanonicalUrl(siteOrigin, canonicalPath || pagePath);
   const safeSiteName = String(siteName || DEFAULT_SITE_NAME).trim() || DEFAULT_SITE_NAME;
   const safeTotalCount = Number.isFinite(Number(totalBusinessCount)) ? Number(totalBusinessCount) : 0;
   const safeFilteredCount = Number.isFinite(Number(filteredBusinessCount))
@@ -389,11 +426,12 @@ export function buildStructuredData({
   siteOrigin = DEFAULT_SITE_ORIGIN,
   basePath = "/",
   pagePath = "/",
+  canonicalPath = "",
   route = createHomeRoute(),
   selectedBusiness = null,
   filters = cloneDefaultFilters(),
 }) {
-  const canonicalUrl = buildCanonicalUrl(siteOrigin, pagePath);
+  const canonicalUrl = buildCanonicalUrl(siteOrigin, canonicalPath || pagePath);
   const homeUrl = buildCanonicalUrl(siteOrigin, buildHomePath(basePath));
   const items = [];
 
