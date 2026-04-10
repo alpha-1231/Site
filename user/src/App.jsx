@@ -14,7 +14,6 @@ import {
 } from "./data-source";
 import {
   DEFAULT_COUNTRY,
-  DEFAULT_HOME_SEO_SECTIONS,
   DEFAULT_SITE_NAME,
   DEFAULT_SITE_ORIGIN,
   DIRECTORY_BRAND,
@@ -330,9 +329,9 @@ export default function App() {
     deferredSearch === appliedFilters.search
       ? appliedFilters
       : {
-        ...appliedFilters,
-        search: deferredSearch,
-      };
+          ...appliedFilters,
+          search: deferredSearch,
+        };
   const appliedFilterCriteria = buildFilterCriteria(displayFilters);
   const filtersAreInSync = areDirectoryFiltersEqual(filters, appliedFilters);
   const showResultsUpdateHint = !filtersAreInSync || filtersArePending;
@@ -405,12 +404,12 @@ export default function App() {
     : buildListingRoute(appliedFilters);
   const currentSeoRoute = selectedSlug
     ? {
-      pageType: "detail",
-      selectedSlug,
-      listingKey: "",
-      listingSlug: "",
-      legacyHash: false,
-    }
+        pageType: "detail",
+        selectedSlug,
+        listingKey: "",
+        listingSlug: "",
+        legacyHash: false,
+      }
     : activeListingRoute;
   const seoBusiness = selectedBusiness || selectedBusinessSummary || null;
   const canonicalPagePath = buildCanonicalPagePath({
@@ -753,14 +752,8 @@ export default function App() {
               <div className="empty-panel glass-panel">
                 <h2>
                   {filters.savedOnly
-                    ? "No saved institutes found"
-                    : filters.type !== "all"
-                      ? `No ${filters.type} institutes found`
-                      : filters.province !== "all"
-                        ? `No institutes found in ${filters.province}`
-                        : filters.district !== "all"
-                          ? `No institutes found in ${filters.district}`
-                          : "No institutes match the current filters"}
+                    ? "No saved institutes match this filter set."
+                    : "No institutes match this filter set."}
                 </h2>
                 <p>
                   {filters.savedOnly
@@ -771,14 +764,7 @@ export default function App() {
             )}
           </section>
         </main>
-        {!selectedBusiness ? (
-          <SeoTextBlock
-            route={activeListingRoute}
-            filters={appliedFilters}
-            filteredCount={filteredBusinessCount}
-            sections={DEFAULT_HOME_SEO_SECTIONS}
-          />
-        ) : null}
+
         <footer className="app-footer glass-panel">
           <div className="app-footer-main">
             <div className="app-footer-brand">
@@ -958,8 +944,8 @@ export default function App() {
                       label="Programs"
                       value={String(
                         selectedBusiness.stats?.programs_count ||
-                        selectedBusiness.programs?.length ||
-                        0
+                          selectedBusiness.programs?.length ||
+                          0
                       )}
                     />
                   </div>
@@ -1174,9 +1160,9 @@ function BusinessCard({ business, isSelected, isSaved, onSelect, onToggleSaved }
 
         <div className="card-body card-body-compact">
           <div className="card-main">
-            <h3 className="card-title card-title-large" title={business.name}>
+            <h2 className="card-title card-title-large" title={business.name}>
               {business.name}
-            </h3>
+            </h2>
             <p className="card-address" title={address}>
               {address}
             </p>
@@ -1486,57 +1472,7 @@ function SectionBlock({ title, children }) {
     </section>
   );
 }
-function SeoTextBlock({ route, filters, filteredCount, sections }) {
-  // Collection page — generate contextual content from live data
-  const routeKey = route?.listingKey;
-  const routeLabel = routeKey ? String(filters?.[routeKey] || "").trim() : "";
 
-  if (routeKey && routeLabel && routeLabel !== "all") {
-    const noun =
-      routeKey === "type"
-        ? routeLabel.toLowerCase()
-        : routeKey === "field"
-          ? `${routeLabel.toLowerCase()} institutes`
-          : `institutes in ${routeLabel}`;
-
-    return (
-      <section className="seo-text-block" aria-label={`About ${routeLabel}`}>
-        <div className="seo-text-item">
-          <h2>
-            {filteredCount} {noun} listed on AboutMySchool
-          </h2>
-          <p>
-            Browse verified {noun} across Nepal. Each profile includes programs,
-            affiliation, facilities, location map, contact numbers, and photos — all
-            in one place so you can compare and shortlist before you visit.
-          </p>
-        </div>
-        <div className="seo-text-item">
-          <h2>How to use the filters</h2>
-          <p>
-            Narrow results further by province, district, education level, or
-            affiliation. Use the search box to match by name, program, or address.
-            Save any institute with the bookmark icon to compare later on the same
-            device.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
-  // Home page — use generated SEO sections from seo-generated.js
-  if (!sections || !sections.length) return null;
-  return (
-    <section className="seo-text-block" aria-label="About AboutMySchool">
-      {sections.map((section, i) => (
-        <div key={i} className="seo-text-item">
-          <h2>{section.title}</h2>
-          <p>{section.body}</p>
-        </div>
-      ))}
-    </section>
-  );
-}
 function BusinessLocationSection({ business }) {
   const mapInfo = getBusinessMapInfo(business);
 
@@ -1741,13 +1677,13 @@ function CountryFlagIcon({ countryName, className = "" }) {
 function hasActiveDirectoryFilters(filters) {
   return Boolean(
     String(filters?.search || "").trim() ||
-    filters?.type !== "all" ||
-    filters?.field !== "all" ||
-    filters?.level !== "all" ||
-    filters?.province !== "all" ||
-    filters?.district !== "all" ||
-    filters?.affiliation !== "all" ||
-    filters?.savedOnly
+      filters?.type !== "all" ||
+      filters?.field !== "all" ||
+      filters?.level !== "all" ||
+      filters?.province !== "all" ||
+      filters?.district !== "all" ||
+      filters?.affiliation !== "all" ||
+      filters?.savedOnly
   );
 }
 
