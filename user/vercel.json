@@ -3,5 +3,77 @@
   "framework": "vite",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/nepal",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/institutions/:slug",
+      "destination": "/institutions/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/province/:slug",
+      "destination": "/province/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/district/:slug",
+      "destination": "/district/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/type/:slug",
+      "destination": "/type/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/field/:slug",
+      "destination": "/field/:slug/",
+      "permanent": true
+    },
+    {
+      "source": "/nepal/affiliation/:slug",
+      "destination": "/affiliation/:slug/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; connect-src 'self' https:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        }
+      ]
+    }
+  ]
 }

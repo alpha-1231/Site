@@ -8,8 +8,6 @@ import {
 } from "./src/directory-records.js";
 import {
   DEFAULT_COUNTRY,
-  DEFAULT_HOME_SEO_SECTIONS,
-  DEFAULT_SITE_DESCRIPTION,
   DEFAULT_SITE_NAME,
   DEFAULT_SITE_ORIGIN,
   buildBusinessPath,
@@ -18,6 +16,7 @@ import {
   buildPageSeoData,
   buildStructuredData,
   normalizeBasePath,
+  normalizeCanonicalPath,
   normalizeRouteSlug,
   normalizeSiteOrigin,
 } from "./src/site-seo.js";
@@ -45,6 +44,25 @@ const PROVINCE_NAMES = {
   "6": "Karnali",
   "7": "Sudurpashchim",
 };
+const PUBLIC_SECURITY_HEADERS = [
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; connect-src 'self' https:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; frame-src 'self' https://www.openstreetmap.org https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+];
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, __dirname, "");
@@ -172,10 +190,10 @@ function seoBuildPlugin({ enabled, basePath, siteName, siteOrigin, publicDataRoo
       );
       const allPages = [homePage, ...collectionPages, ...detailPages];
 
-      writeRenderedPage(distDir, templateHtml, homePage, basePath, true);
       for (const page of allPages) {
-        writeRenderedPage(distDir, templateHtml, page, basePath, false);
+        writeRenderedPage(distDir, templateHtml, page, basePath);
       }
+      writeRootEntryPage(distDir, templateHtml, homePage);
 
       fs.writeFileSync(path.join(distDir, "robots.txt"), buildRobotsTxt(siteOrigin), "utf8");
       fs.writeFileSync(path.join(distDir, "sitemap.xml"), buildSitemapXml(allPages), "utf8");
@@ -196,7 +214,7 @@ function seoBuildPlugin({ enabled, basePath, siteName, siteOrigin, publicDataRoo
         "utf8"
       );
       writeStaticPublicData(distDir, businesses);
-      writeStaticHostSupportFiles(distDir);
+      writeStaticHostSupportFiles(distDir, homePage.path, basePath);
     },
   };
 }
@@ -237,6 +255,8 @@ async function loadSeoDetailedRecord(slug, publicDataRoot = "") {
 
 function createHomePageModel({ businesses, siteName, siteOrigin, basePath, homePath }) {
   const featured = businesses.slice(0, 12);
+  const coverageFacts = buildDirectoryCoverageFacts(businesses);
+  const overviewParagraphs = buildHomeOverviewParagraphs(businesses);
   const provinceLinks = buildSeoBrowseLinks(businesses, "province", (business) => business.province_name || business.province, 7, basePath);
   const districtLinks = buildSeoBrowseLinks(businesses, "district", (business) => business.district, 12, basePath);
   const typeLinks = buildSeoBrowseLinks(businesses, "type", (business) => business.type, 8, basePath);
@@ -263,13 +283,14 @@ function createHomePageModel({ businesses, siteName, siteOrigin, basePath, homeP
       `<main class="seo-fallback">`,
       `<p class="seo-kicker">aboutmyschool.com</p>`,
       `<h1>Find educational institutes across Nepal</h1>`,
-      `<p class="seo-lead">${escapeHtml(DEFAULT_SITE_DESCRIPTION)}</p>`,
-      renderSeoNarrativeSection(DEFAULT_HOME_SEO_SECTIONS),
-      renderSeoLinkSection("Browse by province", provinceLinks),
-      renderSeoLinkSection("Browse by district", districtLinks),
-      renderSeoLinkSection("Browse by institute type", typeLinks),
-      renderSeoLinkSection("Browse by field", fieldLinks),
-      renderSeoBusinessList("Active institutions", featured, basePath),
+      `<p class="seo-lead">${escapeHtml(overviewParagraphs[0])}</p>`,
+      renderSeoTextSection("Directory overview", overviewParagraphs.slice(1), "h2"),
+      renderSeoFactSection("Coverage snapshot", coverageFacts, "h3"),
+      renderSeoLinkSection("Browse by province", provinceLinks, "h3"),
+      renderSeoLinkSection("Browse by district", districtLinks, "h3"),
+      renderSeoLinkSection("Browse by institute type", typeLinks, "h3"),
+      renderSeoLinkSection("Browse by field", fieldLinks, "h3"),
+      renderSeoBusinessList("Active institutions", featured, basePath, "h3"),
       `</main>`,
     ].join(""),
   };
@@ -308,6 +329,9 @@ function createCollectionPagesForKey(businesses, routeKey, getValues, siteName, 
     .map(([label, entries]) => {
       const filters = buildSeoFilters(routeKey, label);
       const pagePath = buildCollectionPath(routeKey, label, basePath);
+      const overviewParagraphs = buildCollectionOverviewParagraphs(routeKey, label, entries, businesses);
+      const factItems = buildCollectionFactItems(routeKey, label, entries);
+      const relatedLinks = buildRelatedCollectionSections(routeKey, entries, basePath);
       return {
         path: pagePath,
         seo: buildPageSeoData({
@@ -338,14 +362,20 @@ function createCollectionPagesForKey(businesses, routeKey, getValues, siteName, 
             legacyHash: false,
           },
           filters,
+          filteredBusinessCount: entries.length,
         }),
         updatedAt: findLatestUpdatedAt(entries),
         bodyHtml: [
           `<main class="seo-fallback">`,
           `<p class="seo-kicker">aboutmyschool.com</p>`,
           `<h1>${escapeHtml(buildCollectionHeading(routeKey, label))}</h1>`,
-          `<p class="seo-lead">${escapeHtml(buildCollectionLead(routeKey, label, entries.length))}</p>`,
-          renderSeoBusinessList(`Top listings for ${label}`, entries.slice(0, 24), basePath),
+          `<p class="seo-lead">${escapeHtml(overviewParagraphs[0])}</p>`,
+          renderSeoTextSection("Page overview", overviewParagraphs.slice(1), "h2"),
+          renderSeoFactSection("Quick facts", factItems, "h3"),
+          ...relatedLinks.map((section) =>
+            renderSeoLinkSection(section.title, section.links, "h3")
+          ),
+          renderSeoBusinessList(`Top listings for ${label}`, entries.slice(0, 24), basePath, "h3"),
           `</main>`,
         ].join(""),
       };
@@ -360,6 +390,7 @@ function createBusinessPageModel({ business, siteName, siteOrigin, basePath }) {
     pagePath,
     selectedBusiness: business,
   });
+  const overviewParagraphs = buildBusinessOverviewParagraphs(business);
   const structuredData = buildStructuredData({
     siteName,
     siteOrigin,
@@ -393,27 +424,23 @@ function createBusinessPageModel({ business, siteName, siteOrigin, basePath }) {
       `</nav>`,
       `<p class="seo-kicker">${escapeHtml([business.type, business.affiliation].filter(Boolean).join(" · "))}</p>`,
       `<h1>${escapeHtml(business.name)}</h1>`,
-      `<p class="seo-lead">${escapeHtml(
-        business.description ||
-          `${business.name} is listed on AboutMySchool with contact details, program areas, facilities, photos, videos, and location information for students and families in Nepal.`
-      )}</p>`,
+      `<p class="seo-lead">${escapeHtml(overviewParagraphs[0])}</p>`,
+      renderSeoTextSection("Institution overview", overviewParagraphs.slice(1), "h2"),
       renderSeoFactGrid(business),
-      renderSeoBusinessLinks(business),
-      renderSeoMediaList("Programs", business.programs),
-      renderSeoMediaList("Facilities", business.facilities),
+      renderSeoBusinessLinks(business, "h3"),
+      renderSeoMediaList("Programs", business.programs, "h3"),
+      renderSeoMediaList("Facilities", business.facilities, "h3"),
       renderSeoMediaLinks("Gallery and media", [
         ...(Array.isArray(business.media?.gallery) ? business.media.gallery : []),
         ...(Array.isArray(business.media?.videos) ? business.media.videos : []),
-      ]),
+      ], "h3"),
       `</main>`,
     ].join(""),
   };
 }
 
-function writeRenderedPage(distDir, templateHtml, page, basePath, rootDuplicate) {
-  const outputPath = rootDuplicate
-    ? path.join(distDir, "index.html")
-    : path.join(distDir, resolveDistRouteFile(page.path, basePath));
+function writeRenderedPage(distDir, templateHtml, page, basePath) {
+  const outputPath = path.join(distDir, resolveDistRouteFile(page.path, basePath));
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(
@@ -423,6 +450,30 @@ function writeRenderedPage(distDir, templateHtml, page, basePath, rootDuplicate)
       structuredData: page.structuredData,
       bodyHtml: page.bodyHtml,
     }),
+    "utf8"
+  );
+}
+
+function writeRootEntryPage(distDir, templateHtml, homePage) {
+  const rootIndexPath = path.join(distDir, "index.html");
+  const targetPath = normalizeCanonicalPath(homePage.path);
+
+  if (targetPath === "/") {
+    fs.writeFileSync(
+      rootIndexPath,
+      renderHtmlPage(templateHtml, {
+        seo: homePage.seo,
+        structuredData: homePage.structuredData,
+        bodyHtml: homePage.bodyHtml,
+      }),
+      "utf8"
+    );
+    return;
+  }
+
+  fs.writeFileSync(
+    rootIndexPath,
+    renderRedirectHtml(targetPath, homePage.seo.canonicalUrl),
     "utf8"
   );
 }
@@ -474,14 +525,49 @@ function renderHtmlPage(templateHtml, { seo, structuredData, bodyHtml }) {
   return html;
 }
 
-function renderSeoLinkSection(title, links) {
+function renderRedirectHtml(targetPath, canonicalUrl) {
+  return [
+    "<!doctype html>",
+    '<html lang="en">',
+    "  <head>",
+    '    <meta charset="UTF-8" />',
+    '    <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+    "    <title>Redirecting…</title>",
+    `    <meta http-equiv="refresh" content="0; url=${escapeAttribute(targetPath)}" />`,
+    '    <meta name="robots" content="noindex,follow" />',
+    `    <link rel="canonical" href="${escapeAttribute(canonicalUrl)}" />`,
+    "  </head>",
+    "  <body>",
+    `    <p>Redirecting to <a href="${escapeAttribute(targetPath)}">${escapeHtml(targetPath)}</a>.</p>`,
+    `    <script>window.location.replace(${JSON.stringify(targetPath)});</script>`,
+    "  </body>",
+    "</html>",
+    "",
+  ].join("\n");
+}
+
+function renderSeoTextSection(title, paragraphs, headingTag = "h2") {
+  const items = ensureArray(paragraphs).filter(Boolean);
+  if (!items.length) {
+    return "";
+  }
+
+  return [
+    `<section class="seo-section">`,
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
+    ...items.map((paragraph) => `<p class="seo-copy">${escapeHtml(paragraph)}</p>`),
+    `</section>`,
+  ].join("");
+}
+
+function renderSeoLinkSection(title, links, headingTag = "h2") {
   if (!links.length) {
     return "";
   }
 
   return [
     `<section class="seo-section">`,
-    `<h2>${escapeHtml(title)}</h2>`,
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
     `<ul class="seo-link-list">`,
     ...links.map(
       (link) =>
@@ -494,32 +580,33 @@ function renderSeoLinkSection(title, links) {
   ].join("");
 }
 
-function renderSeoNarrativeSection(sections) {
-  const items = Array.isArray(sections) ? sections.filter(Boolean) : [];
-  if (!items.length) {
+function renderSeoFactSection(title, items, headingTag = "h2") {
+  const values = ensureArray(items).filter((item) => item?.label && item?.value);
+  if (!values.length) {
     return "";
   }
 
   return [
     `<section class="seo-section">`,
-    ...items.map(
-      (section) =>
-        `<div class="seo-story-block"><h2>${escapeHtml(section.title)}</h2><p>${escapeHtml(
-          section.body
-        )}</p></div>`
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
+    `<div class="seo-fact-grid">`,
+    ...values.map(
+      (item) =>
+        `<div><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong></div>`
     ),
+    `</div>`,
     `</section>`,
   ].join("");
 }
 
-function renderSeoBusinessList(title, businesses, basePath) {
+function renderSeoBusinessList(title, businesses, basePath, headingTag = "h2") {
   if (!businesses.length) {
     return "";
   }
 
   return [
     `<section class="seo-section">`,
-    `<h2>${escapeHtml(title)}</h2>`,
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
     `<ul class="seo-business-list">`,
     ...businesses.map((business) => {
       const summary = [business.type, business.district, business.province_name].filter(Boolean).join(" · ");
@@ -554,7 +641,7 @@ function renderSeoFactGrid(business) {
   ].join("");
 }
 
-function renderSeoBusinessLinks(business) {
+function renderSeoBusinessLinks(business, headingTag = "h2") {
   const links = [
     business.contact?.website ? `<a href="${escapeAttribute(ensureUrl(business.contact.website))}">Official website</a>` : "",
     business.contact?.email ? `<a href="mailto:${escapeAttribute(business.contact.email)}">Email</a>` : "",
@@ -570,13 +657,13 @@ function renderSeoBusinessLinks(business) {
 
   return [
     `<section class="seo-section">`,
-    `<h2>Contact and links</h2>`,
+    `<${headingTag}>Contact and links</${headingTag}>`,
     `<div class="seo-inline-links">${links.join("")}</div>`,
     `</section>`,
   ].join("");
 }
 
-function renderSeoMediaList(title, items) {
+function renderSeoMediaList(title, items, headingTag = "h2") {
   const values = ensureArray(items).filter(Boolean);
   if (!values.length) {
     return "";
@@ -584,7 +671,7 @@ function renderSeoMediaList(title, items) {
 
   return [
     `<section class="seo-section">`,
-    `<h2>${escapeHtml(title)}</h2>`,
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
     `<ul class="seo-chip-list">`,
     ...values.map((item) => `<li>${escapeHtml(item)}</li>`),
     `</ul>`,
@@ -592,7 +679,7 @@ function renderSeoMediaList(title, items) {
   ].join("");
 }
 
-function renderSeoMediaLinks(title, items) {
+function renderSeoMediaLinks(title, items, headingTag = "h2") {
   const values = ensureArray(items).filter(Boolean);
   if (!values.length) {
     return "";
@@ -600,7 +687,7 @@ function renderSeoMediaLinks(title, items) {
 
   return [
     `<section class="seo-section">`,
-    `<h2>${escapeHtml(title)}</h2>`,
+    `<${headingTag}>${escapeHtml(title)}</${headingTag}>`,
     `<ul class="seo-business-list">`,
     ...values.slice(0, 12).map((item, index) => {
       const href = ensureUrl(item);
@@ -661,12 +748,211 @@ function buildCollectionHeading(routeKey, label) {
 
 function buildCollectionLead(routeKey, label, count) {
   if (routeKey === "field") {
-    return `Browse ${count} active educational institutes in Nepal connected to ${label}.`;
+    return `Browse ${count} active institutes in Nepal connected to ${label}.`;
   }
   if (routeKey === "type") {
-    return `Browse ${count} active ${label.toLowerCase()} listings across Nepal with profile details, media, and contact information.`;
+    return `Browse ${count} active ${label.toLowerCase()} listings across Nepal.`;
   }
-  return `Browse ${count} active educational institutes in ${label}, Nepal with photos, videos, facilities, and full contact details.`;
+  return `Browse ${count} active institutes in ${label}, Nepal.`;
+}
+
+function buildHomeOverviewParagraphs(businesses) {
+  const coverage = buildCoverageSnapshot(businesses);
+  return [
+    `Find schools, colleges, universities, and training centers across Nepal from one directory.`,
+    `${DEFAULT_SITE_NAME} currently lists ${coverage.total} active institutions across ${coverage.districts} districts and ${coverage.provinces} provinces.`,
+    `Each public profile can show contacts, programs, facilities, photos, videos, and map details. This helps families compare options faster.`,
+    `Start with a province, district, type, or field page. Then open an institution profile for the full public details.`,
+  ];
+}
+
+function buildDirectoryCoverageFacts(businesses) {
+  const coverage = buildCoverageSnapshot(businesses);
+  return [
+    { label: "Active listings", value: String(coverage.total) },
+    { label: "Provinces", value: String(coverage.provinces) },
+    { label: "Districts", value: String(coverage.districts) },
+    { label: "Types", value: String(coverage.types) },
+    { label: "Fields", value: String(coverage.fields) },
+  ];
+}
+
+function buildCollectionOverviewParagraphs(routeKey, label, entries, allBusinesses) {
+  const coverage = buildCoverageSnapshot(entries);
+  const total = entries.length;
+  const topAffiliations = summarizeTopLabels(entries.map((business) => business.affiliation), 2);
+  const topLevels = summarizeTopLabels(entries.flatMap((business) => business.level || []), 3);
+  const allCoverage = buildCoverageSnapshot(allBusinesses);
+  const lines = [buildCollectionLead(routeKey, label, total)];
+
+  if (routeKey === "province") {
+    lines.push(`This province page helps users review institutes in ${label} without jumping between many sources.`);
+  } else if (routeKey === "district") {
+    lines.push(`This district page is useful when families want local options in ${label} and need a quick shortlist.`);
+  } else if (routeKey === "type") {
+    lines.push(`This type page groups similar institutions, so it is easier to compare ${label.toLowerCase()} listings across Nepal.`);
+  } else if (routeKey === "field") {
+    lines.push(`This field page groups institutions connected to ${label}, so users can focus on one study area first.`);
+  }
+
+  lines.push(
+    `The current set covers ${coverage.types} type${coverage.types === 1 ? "" : "s"}, ${coverage.fields} field${coverage.fields === 1 ? "" : "s"}, and ${coverage.districts} district${coverage.districts === 1 ? "" : "s"}.`
+  );
+
+  if (topAffiliations.length) {
+    lines.push(`Common affiliations here include ${topAffiliations.join(", ")}.`);
+  } else if (topLevels.length) {
+    lines.push(`Common learning levels here include ${topLevels.join(", ")}.`);
+  }
+
+  lines.push(
+    `As the public business list grows, this page will keep the same structure and will rebuild with the newest matching listings and counts.`
+  );
+
+  if (allCoverage.total > total) {
+    lines.push(`Use the related browse links below to move from ${label} to other parts of the Nepal directory.`);
+  }
+
+  return lines;
+}
+
+function buildCollectionFactItems(routeKey, label, entries) {
+  const coverage = buildCoverageSnapshot(entries);
+  const items = [
+    { label: "Listings", value: String(entries.length) },
+    { label: "Types", value: String(coverage.types) },
+    { label: "Fields", value: String(coverage.fields) },
+    { label: "Affiliations", value: String(coverage.affiliations) },
+  ];
+
+  if (routeKey !== "province") {
+    items.push({ label: "Provinces", value: String(coverage.provinces) });
+  }
+
+  if (routeKey !== "district") {
+    items.push({ label: "Districts", value: String(coverage.districts) });
+  }
+
+  return dedupeFactItems(items).slice(0, 6);
+}
+
+function buildRelatedCollectionSections(routeKey, entries, basePath) {
+  const sectionConfigs = {
+    province: [
+      { title: "Popular districts in this province", key: "district", getValue: (business) => business.district, limit: 6 },
+      { title: "Popular institute types here", key: "type", getValue: (business) => business.type, limit: 6 },
+    ],
+    district: [
+      { title: "Institute types in this district", key: "type", getValue: (business) => business.type, limit: 6 },
+      { title: "Fields linked to this district", key: "field", getValue: (business) => business.field || [], limit: 6 },
+    ],
+    type: [
+      { title: "Districts with these listings", key: "district", getValue: (business) => business.district, limit: 6 },
+      { title: "Fields linked to this type", key: "field", getValue: (business) => business.field || [], limit: 6 },
+    ],
+    field: [
+      { title: "Districts with this field", key: "district", getValue: (business) => business.district, limit: 6 },
+      { title: "Institute types for this field", key: "type", getValue: (business) => business.type, limit: 6 },
+    ],
+  }[routeKey] || [];
+
+  return sectionConfigs
+    .map((config) => ({
+      title: config.title,
+      links: buildSeoBrowseLinks(entries, config.key, config.getValue, config.limit, basePath),
+    }))
+    .filter((section) => section.links.length);
+}
+
+function buildBusinessOverviewParagraphs(business) {
+  const safeName = stringOrDefault(business?.name, "This institution");
+  const safeType = stringOrDefault(business?.type, "educational institute");
+  const location = [business?.district, business?.province_name].filter(Boolean).join(", ");
+  const levels = cleanStringArray(business?.level);
+  const fields = cleanStringArray(business?.field);
+  const facilities = cleanStringArray(business?.facilities);
+  const programs = cleanStringArray(business?.programs);
+  const lines = [
+    `${safeName} is a ${safeType.toLowerCase()}${location ? ` in ${location}` : ` in ${DEFAULT_COUNTRY}`}.`,
+    `${DEFAULT_SITE_NAME} shows its public contact details, facility list, media, and map information in one place.`,
+  ];
+
+  if (levels.length) {
+    lines.push(`It serves ${joinReadableList(levels)}.`);
+  }
+
+  if (fields.length) {
+    lines.push(`Its listed fields include ${joinReadableList(fields)}.`);
+  } else if (programs.length) {
+    lines.push(`Its listed programs include ${joinReadableList(programs.slice(0, 4))}.`);
+  }
+
+  if (facilities.length) {
+    lines.push(`Reported facilities include ${joinReadableList(facilities.slice(0, 4))}.`);
+  }
+
+  return lines;
+}
+
+function buildCoverageSnapshot(businesses) {
+  return {
+    total: ensureArray(businesses).length,
+    provinces: countUniqueLabels(ensureArray(businesses).map((business) => business.province_name || business.province)),
+    districts: countUniqueLabels(ensureArray(businesses).map((business) => business.district)),
+    types: countUniqueLabels(ensureArray(businesses).map((business) => business.type)),
+    fields: countUniqueLabels(ensureArray(businesses).flatMap((business) => business.field || [])),
+    affiliations: countUniqueLabels(ensureArray(businesses).map((business) => business.affiliation)),
+  };
+}
+
+function summarizeTopLabels(values, limit = 3) {
+  const counts = new Map();
+  for (const value of ensureArray(values)) {
+    const label = stringOrDefault(value);
+    if (!label) {
+      continue;
+    }
+    counts.set(label, (counts.get(label) || 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, limit)
+    .map(([label]) => label);
+}
+
+function countUniqueLabels(values) {
+  return new Set(
+    ensureArray(values)
+      .map((value) => stringOrDefault(value))
+      .filter(Boolean)
+  ).size;
+}
+
+function joinReadableList(values) {
+  const items = ensureArray(values).filter(Boolean);
+  if (!items.length) {
+    return "";
+  }
+  if (items.length === 1) {
+    return items[0];
+  }
+  if (items.length === 2) {
+    return `${items[0]} and ${items[1]}`;
+  }
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+}
+
+function dedupeFactItems(items) {
+  const seen = new Set();
+  return ensureArray(items).filter((item) => {
+    const key = `${item?.label}:${item?.value}`;
+    if (!item?.label || !item?.value || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function buildRobotsTxt(siteOrigin) {
@@ -712,18 +998,20 @@ function writeStaticPublicData(distDir, businesses) {
   }
 }
 
-function writeStaticHostSupportFiles(distDir) {
-  const indexPath = path.join(distDir, "index.html");
-  if (fs.existsSync(indexPath)) {
-    fs.copyFileSync(indexPath, path.join(distDir, "404.html"));
+function writeStaticHostSupportFiles(distDir, homePath, basePath) {
+  const homeEntryPath = path.join(distDir, resolveDistRouteFile(homePath, basePath));
+  if (fs.existsSync(homeEntryPath)) {
+    fs.copyFileSync(homeEntryPath, path.join(distDir, "404.html"));
   }
 
-  fs.writeFileSync(path.join(distDir, ".htaccess"), buildApacheFallbackFile(), "utf8");
-  fs.writeFileSync(path.join(distDir, "web.config"), buildIisFallbackFile(), "utf8");
-  fs.writeFileSync(path.join(distDir, "_redirects"), "/* /index.html 200\n", "utf8");
+  const fallbackFile = `/${resolveDistRouteFile(homePath, basePath).replace(/\\/g, "/")}`;
+  fs.writeFileSync(path.join(distDir, ".htaccess"), buildApacheFallbackFile(fallbackFile), "utf8");
+  fs.writeFileSync(path.join(distDir, "web.config"), buildIisFallbackFile(fallbackFile), "utf8");
+  fs.writeFileSync(path.join(distDir, "_redirects"), buildStaticRedirectsFile(homePath, fallbackFile), "utf8");
+  fs.writeFileSync(path.join(distDir, "_headers"), buildStaticHeadersFile(), "utf8");
 }
 
-function buildApacheFallbackFile() {
+function buildApacheFallbackFile(fallbackFile) {
   return [
     "Options -MultiViews",
     "<IfModule mod_rewrite.c>",
@@ -731,13 +1019,13 @@ function buildApacheFallbackFile() {
     "RewriteCond %{REQUEST_FILENAME} -f [OR]",
     "RewriteCond %{REQUEST_FILENAME} -d",
     "RewriteRule ^ - [L]",
-    "RewriteRule . index.html [L]",
+    `RewriteRule . ${String(fallbackFile || "/index.html").replace(/^\//, "")} [L]`,
     "</IfModule>",
     "",
   ].join("\n");
 }
 
-function buildIisFallbackFile() {
+function buildIisFallbackFile(fallbackFile) {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     "<configuration>",
@@ -750,7 +1038,9 @@ function buildIisFallbackFile() {
     '            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />',
     '            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />',
     "          </conditions>",
-    '          <action type="Rewrite" url="index.html" />',
+    `          <action type="Rewrite" url="${escapeAttribute(
+      String(fallbackFile || "/index.html").replace(/^\//, "")
+    )}" />`,
     "        </rule>",
     "      </rules>",
     "    </rewrite>",
@@ -758,6 +1048,25 @@ function buildIisFallbackFile() {
     "</configuration>",
     "",
   ].join("\n");
+}
+
+function buildStaticHeadersFile() {
+  return [
+    "/*",
+    ...PUBLIC_SECURITY_HEADERS.map((header) => `  ${header.key}: ${header.value}`),
+    "",
+  ].join("\n");
+}
+
+function buildStaticRedirectsFile(homePath, fallbackFile) {
+  const lines = [];
+  const normalizedHomePath = normalizeCanonicalPath(homePath);
+  if (normalizedHomePath !== "/") {
+    lines.push(`/ ${normalizedHomePath} 308`);
+  }
+  lines.push(`/* ${fallbackFile || "/index.html"} 200`);
+  lines.push("");
+  return lines.join("\n");
 }
 
 function resolveDistRouteFile(pagePath, basePath) {
@@ -855,11 +1164,11 @@ const SEO_FALLBACK_STYLE = `
 .seo-kicker{margin:0 0 12px;color:#2458d8;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
 .seo-fallback h1{margin:0;font-size:clamp(30px,4vw,52px);line-height:1.02;letter-spacing:-.05em}
 .seo-fallback h2{margin:0 0 12px;font-size:22px;letter-spacing:-.03em}
+.seo-fallback h3{margin:0 0 12px;font-size:18px;letter-spacing:-.02em}
 .seo-lead{max-width:860px;margin:16px 0 0;color:#4f5d72;line-height:1.7}
+.seo-copy{max-width:860px;margin:12px 0 0;color:#4f5d72;line-height:1.72}
 .seo-section{margin-top:28px;padding:22px;border:1px solid rgba(24,45,77,.1);border-radius:24px;background:rgba(255,255,255,.82);box-shadow:0 14px 30px rgba(18,35,64,.06)}
 .seo-link-list,.seo-business-list,.seo-chip-list{display:grid;gap:12px;padding:0;margin:0;list-style:none}
-.seo-story-block+.seo-story-block{margin-top:18px;padding-top:18px;border-top:1px solid rgba(24,45,77,.08)}
-.seo-story-block p{margin:10px 0 0;color:#4f5d72;line-height:1.72}
 .seo-link-list li,.seo-business-list li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid rgba(24,45,77,.08)}
 .seo-link-list span,.seo-business-list span{color:#5c687d}
 .seo-link-list a,.seo-business-list a,.seo-inline-links a,.seo-breadcrumbs a{color:#1f6ff2;text-decoration:none}

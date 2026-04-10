@@ -40,12 +40,12 @@ Do not commit local-only `.env` files.
 
 ## Environment settings
 
-For production at `https://aboutmyschool.com/`:
+For production at `https://www.aboutmyschool.com/`:
 
 ```env
 VITE_USER_BASE=/
 VITE_SITE_NAME=AboutMySchool
-VITE_SITE_ORIGIN=https://aboutmyschool.com
+VITE_SITE_ORIGIN=https://www.aboutmyschool.com
 VITE_PUBLIC_DATA_ROOT=https://raw.githubusercontent.com/<owner>/<repo>/<branch>
 ```
 

@@ -19,6 +19,7 @@ import {
   DIRECTORY_BRAND,
   DIRECTORY_TAGLINE,
   buildBusinessPath,
+  buildCanonicalPagePath,
   buildCollectionPath,
   buildListingUrl,
   buildPageSeoData,
@@ -401,20 +402,28 @@ export default function App() {
   const currentPagePath = selectedSlug
     ? buildBusinessPath(selectedSlug, APP_BASE_PATH)
     : buildListingRoute(appliedFilters);
+  const currentSeoRoute = selectedSlug
+    ? {
+        pageType: "detail",
+        selectedSlug,
+        listingKey: "",
+        listingSlug: "",
+        legacyHash: false,
+      }
+    : activeListingRoute;
   const seoBusiness = selectedBusiness || selectedBusinessSummary || null;
+  const canonicalPagePath = buildCanonicalPagePath({
+    basePath: APP_BASE_PATH,
+    route: currentSeoRoute,
+    selectedBusiness: seoBusiness,
+    filters: appliedFilters,
+  });
   const pageSeo = buildPageSeoData({
     siteName: SITE_NAME,
     siteOrigin: SITE_ORIGIN,
     pagePath: currentPagePath,
-    route: selectedSlug
-      ? {
-          pageType: "detail",
-          selectedSlug,
-          listingKey: "",
-          listingSlug: "",
-          legacyHash: false,
-        }
-      : activeListingRoute,
+    canonicalPath: canonicalPagePath,
+    route: currentSeoRoute,
     selectedBusiness: seoBusiness,
     filters: appliedFilters,
     filteredBusinessCount,
@@ -425,17 +434,11 @@ export default function App() {
     siteOrigin: SITE_ORIGIN,
     basePath: APP_BASE_PATH,
     pagePath: currentPagePath,
-    route: selectedSlug
-      ? {
-          pageType: "detail",
-          selectedSlug,
-          listingKey: "",
-          listingSlug: "",
-          legacyHash: false,
-        }
-      : activeListingRoute,
+    canonicalPath: canonicalPagePath,
+    route: currentSeoRoute,
     selectedBusiness: seoBusiness,
     filters: appliedFilters,
+    filteredBusinessCount,
   });
   useEffect(() => {
     updateDocumentSeo(pageSeo, structuredData);

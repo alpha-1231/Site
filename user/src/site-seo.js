@@ -8,7 +8,7 @@ import {
 export const DEFAULT_COUNTRY = "Nepal";
 export const DEFAULT_COUNTRY_ROUTE = "nepal";
 export const DEFAULT_SITE_NAME = "AboutMySchool";
-export const DEFAULT_SITE_ORIGIN = "https://aboutmyschool.com";
+export const DEFAULT_SITE_ORIGIN = "https://www.aboutmyschool.com";
 export const DIRECTORY_BRAND = DEFAULT_SITE_NAME;
 export const DIRECTORY_TAGLINE = "Nepal's educational directory";
 const FALLBACK_SITE_DESCRIPTION =
@@ -82,6 +82,8 @@ export const DEFAULT_FILTERS = Object.freeze({
 const INDEXABLE_ROUTE_KEYS = new Set(["province", "district", "type", "field"]);
 const ROUTE_QUERY_PRIORITY = ["province", "district", "type", "field"];
 const FILTER_QUERY_KEYS = ["type", "field", "level", "province", "district", "affiliation"];
+const SEO_TITLE_LIMIT = 60;
+const SEO_DESCRIPTION_LIMIT = 150;
 
 export function cloneDefaultFilters() {
   return { ...DEFAULT_FILTERS };
@@ -251,6 +253,42 @@ export function buildCanonicalUrl(siteOrigin, path) {
   return new URL(normalizeCanonicalPath(path), normalizeSiteOrigin(siteOrigin)).toString();
 }
 
+export function buildCanonicalPagePath({
+  basePath = "/",
+  route = createHomeRoute(),
+  selectedBusiness = null,
+  filters = cloneDefaultFilters(),
+}) {
+  if (selectedBusiness?.slug) {
+    return buildBusinessPath(selectedBusiness.slug, basePath);
+  }
+
+  if (route?.pageType === "detail" && route?.selectedSlug) {
+    return buildBusinessPath(route.selectedSlug, basePath);
+  }
+
+  const normalizedFilters = normalizeFilters(filters);
+  const indexableRoute = deriveIndexableRouteFromFilters(normalizedFilters);
+  if (indexableRoute.listingKey && normalizedFilters[indexableRoute.listingKey] !== "all") {
+    return buildCollectionPath(
+      indexableRoute.listingKey,
+      normalizedFilters[indexableRoute.listingKey],
+      basePath
+    );
+  }
+
+  const fallbackRoute = deriveNavigableRouteFromFilters(normalizedFilters);
+  if (fallbackRoute.listingKey && normalizedFilters[fallbackRoute.listingKey] !== "all") {
+    return buildCollectionPath(
+      fallbackRoute.listingKey,
+      normalizedFilters[fallbackRoute.listingKey],
+      basePath
+    );
+  }
+
+  return buildHomePath(basePath);
+}
+
 export function normalizeCanonicalPath(value) {
   const normalized = String(value || "/")
     .trim()
@@ -266,13 +304,14 @@ export function buildPageSeoData({
   siteName = DEFAULT_SITE_NAME,
   siteOrigin = DEFAULT_SITE_ORIGIN,
   pagePath = "/",
+  canonicalPath = "",
   route = createHomeRoute(),
   selectedBusiness = null,
   filters = cloneDefaultFilters(),
   filteredBusinessCount = 0,
   totalBusinessCount = 0,
 }) {
-  const canonicalUrl = buildCanonicalUrl(siteOrigin, pagePath);
+  const canonicalUrl = buildCanonicalUrl(siteOrigin, canonicalPath || pagePath);
   const safeSiteName = String(siteName || DEFAULT_SITE_NAME).trim() || DEFAULT_SITE_NAME;
   const safeTotalCount = Number.isFinite(Number(totalBusinessCount)) ? Number(totalBusinessCount) : 0;
   const safeFilteredCount = Number.isFinite(Number(filteredBusinessCount))
@@ -281,21 +320,8 @@ export function buildPageSeoData({
   const keywords = buildPageKeywords({ route, selectedBusiness, filters });
 
   if (selectedBusiness) {
-    const title = [
-      selectedBusiness.name,
-      buildBusinessTitleSuffix(selectedBusiness),
-      safeSiteName,
-    ]
-      .filter(Boolean)
-      .join(" | ");
-    const description = truncateDescription(
-      selectedBusiness.description ||
-        `${selectedBusiness.name} is a ${selectedBusiness.type || "educational institute"} in ${
-          [selectedBusiness.district, selectedBusiness.province_name, DEFAULT_COUNTRY]
-            .filter(Boolean)
-            .join(", ")
-        }. Explore programs, facilities, contact details, photos, videos, map location, and admission-ready profile details on ${safeSiteName}.`
-    );
+    const title = buildBusinessSeoTitle(selectedBusiness, safeSiteName);
+    const description = buildBusinessSeoDescription(selectedBusiness, safeSiteName);
 
     return {
       title,
@@ -328,20 +354,13 @@ export function buildPageSeoData({
   }[route.pageType];
 
   if (routeSeo && routeSeo.label && routeSeo.label !== "all") {
-    const title =
-      route.pageType === "type"
-        ? `${routeSeo.label} in Nepal | ${safeSiteName}`
-        : route.pageType === "field"
-          ? `${routeSeo.label} Institutes in Nepal | ${safeSiteName}`
-          : `Educational Institutes in ${routeSeo.label}, Nepal | ${safeSiteName}`;
-    const description = truncateDescription(
-      `Browse ${safeFilteredCount || safeTotalCount} ${routeSeo.noun} ${
-        route.pageType === "type"
-          ? `for ${routeSeo.label} in ${DEFAULT_COUNTRY}`
-          : route.pageType === "field"
-            ? `focused on ${routeSeo.label} in ${DEFAULT_COUNTRY}`
-            : `in ${routeSeo.label}, ${DEFAULT_COUNTRY}`
-      }. Compare programs, affiliation, contact details, photos, videos, facilities, and maps on ${safeSiteName}.`
+    const routeCount = safeFilteredCount || safeTotalCount;
+    const title = buildCollectionSeoTitle(route.pageType, routeSeo.label, safeSiteName);
+    const description = buildCollectionSeoDescription(
+      route.pageType,
+      routeSeo.label,
+      routeCount,
+      safeSiteName
     );
 
     return {
@@ -363,9 +382,10 @@ export function buildPageSeoData({
 
   if (nonIndexableFiltersActive) {
     return {
-      title: `Filtered Educational Institutes in Nepal | ${safeSiteName}`,
+      title: composeSeoTitle("Filtered Institutes in Nepal", safeSiteName),
       description: truncateDescription(
-        `Filter schools, colleges, universities, technical institutes, and training centers across ${DEFAULT_COUNTRY} on ${safeSiteName}.`
+        `Filter schools, colleges, universities, and training centers across ${DEFAULT_COUNTRY} on ${safeSiteName}.`,
+        SEO_DESCRIPTION_LIMIT
       ),
       canonicalUrl,
       robots: "noindex,follow",
@@ -375,8 +395,8 @@ export function buildPageSeoData({
   }
 
   return {
-    title: `${safeSiteName} | Nepal Educational Directory`,
-    description: truncateDescription(DEFAULT_SITE_DESCRIPTION),
+    title: `${safeSiteName} Nepal Directory`,
+    description: buildHomeSeoDescription(safeSiteName),
     canonicalUrl,
     robots: "index,follow",
     image: "",
@@ -389,11 +409,13 @@ export function buildStructuredData({
   siteOrigin = DEFAULT_SITE_ORIGIN,
   basePath = "/",
   pagePath = "/",
+  canonicalPath = "",
   route = createHomeRoute(),
   selectedBusiness = null,
   filters = cloneDefaultFilters(),
+  filteredBusinessCount = 0,
 }) {
-  const canonicalUrl = buildCanonicalUrl(siteOrigin, pagePath);
+  const canonicalUrl = buildCanonicalUrl(siteOrigin, canonicalPath || pagePath);
   const homeUrl = buildCanonicalUrl(siteOrigin, buildHomePath(basePath));
   const items = [];
 
@@ -478,7 +500,12 @@ export function buildStructuredData({
     items.push({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: `${routeLabel} educational institutes`,
+      name:
+        route.pageType === "type"
+          ? `${pluralizeLabel(routeLabel)} in ${DEFAULT_COUNTRY}`
+          : route.pageType === "field"
+            ? `${routeLabel} institutes in ${DEFAULT_COUNTRY}`
+            : `${routeLabel} institutes`,
       url: canonicalUrl,
       description: buildPageSeoData({
         siteName,
@@ -486,6 +513,7 @@ export function buildStructuredData({
         pagePath,
         route,
         filters,
+        filteredBusinessCount,
       }).description,
       isPartOf: {
         "@type": "WebSite",
@@ -705,6 +733,62 @@ function buildBusinessTitleSuffix(business) {
   return parts.join(" in ");
 }
 
+function buildBusinessSeoTitle(business, siteName) {
+  return composeSeoTitle(business?.name || "Institution profile", siteName);
+}
+
+function buildBusinessSeoDescription(business, siteName) {
+  const safeName = normalizeString(business?.name) || "This institution";
+  const safeType = normalizeString(business?.type).toLowerCase() || "educational institute";
+  const location = [business?.district, business?.province_name].filter(Boolean).join(", ");
+  const lead = `${safeName} is a ${safeType}${location ? ` in ${location}` : ` in ${DEFAULT_COUNTRY}`}.`;
+  const followUp = `View contacts, levels, facilities, photos, and map details on ${siteName}.`;
+  return truncateDescription(`${lead} ${followUp}`, SEO_DESCRIPTION_LIMIT);
+}
+
+function buildCollectionSeoTitle(routeType, label, siteName) {
+  const safeLabel = normalizeString(label) || "Institutes";
+  if (routeType === "type") {
+    return composeSeoTitle(`${pluralizeLabel(safeLabel)} in Nepal`, siteName);
+  }
+  if (routeType === "field") {
+    return composeSeoTitle(`${safeLabel} Institutes`, siteName);
+  }
+  return composeSeoTitle(`${safeLabel} Institutes`, siteName);
+}
+
+function buildCollectionSeoDescription(routeType, label, count, siteName) {
+  const safeCount = Number.isFinite(Number(count)) ? Number(count) : 0;
+  const listingLabel = `${safeCount} ${safeCount === 1 ? "listing" : "listings"}`;
+  const safeLabel = normalizeString(label) || "Nepal";
+
+  if (routeType === "type") {
+    return truncateDescription(
+      `Browse ${listingLabel} for ${pluralizeLabel(safeLabel).toLowerCase()} in Nepal. View contacts, programs, facilities, photos, and maps on ${siteName}.`,
+      SEO_DESCRIPTION_LIMIT
+    );
+  }
+
+  if (routeType === "field") {
+    return truncateDescription(
+      `Browse ${listingLabel} for ${safeLabel.toLowerCase()} institutes in Nepal. View contacts, programs, facilities, photos, and maps on ${siteName}.`,
+      SEO_DESCRIPTION_LIMIT
+    );
+  }
+
+  return truncateDescription(
+    `Browse ${listingLabel} for institutes in ${safeLabel}, Nepal. View contacts, programs, facilities, photos, and maps on ${siteName}.`,
+    SEO_DESCRIPTION_LIMIT
+  );
+}
+
+function buildHomeSeoDescription(siteName) {
+  return truncateDescription(
+    `Find schools, colleges, universities, and training centers in Nepal with contacts, programs, facilities, photos, and maps on ${siteName}.`,
+    SEO_DESCRIPTION_LIMIT
+  );
+}
+
 function buildPageKeywords({ route, selectedBusiness, filters }) {
   const homeKeywords = PAGE_TYPE_KEYWORDS.home;
 
@@ -817,12 +901,15 @@ function collectBusinessLinks(business) {
   return links.length ? [...new Set(links)] : undefined;
 }
 
-function truncateDescription(value, limit = 165) {
+function truncateDescription(value, limit = SEO_DESCRIPTION_LIMIT) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (text.length <= limit) {
     return text;
   }
-  return `${text.slice(0, Math.max(0, limit - 1)).trimEnd()}…`;
+  const clipped = text.slice(0, Math.max(0, limit - 1));
+  const boundary = clipped.lastIndexOf(" ");
+  const safeClip = boundary > limit * 0.55 ? clipped.slice(0, boundary) : clipped;
+  return `${safeClip.trimEnd()}…`;
 }
 
 function normalizeString(value) {
@@ -867,6 +954,60 @@ function mergeKeywords(items, limit = 18) {
     0,
     limit
   );
+}
+
+function composeSeoTitle(primary, siteName, limit = SEO_TITLE_LIMIT) {
+  const safePrimary = normalizeString(primary) || siteName;
+  const safeSiteName = normalizeString(siteName) || DEFAULT_SITE_NAME;
+  const suffix = ` | ${safeSiteName}`;
+
+  if (`${safePrimary}${suffix}`.length <= limit) {
+    return `${safePrimary}${suffix}`;
+  }
+
+  const available = Math.max(12, limit - suffix.length - 1);
+  return `${truncateText(safePrimary, available)}${suffix}`;
+}
+
+function truncateText(value, limit) {
+  const text = normalizeString(value);
+  if (text.length <= limit) {
+    return text;
+  }
+
+  const clipped = text.slice(0, Math.max(0, limit - 1));
+  const boundary = clipped.lastIndexOf(" ");
+  const safeClip = boundary > limit * 0.55 ? clipped.slice(0, boundary) : clipped;
+  return `${safeClip.trimEnd()}…`;
+}
+
+function pluralizeLabel(label) {
+  const safeLabel = normalizeString(label);
+  if (!safeLabel) {
+    return "Institutes";
+  }
+
+  if (/school$/i.test(safeLabel)) {
+    return safeLabel.replace(/school$/i, "Schools");
+  }
+
+  if (/college$/i.test(safeLabel)) {
+    return safeLabel.replace(/college$/i, "Colleges");
+  }
+
+  if (/university$/i.test(safeLabel)) {
+    return safeLabel.replace(/university$/i, "Universities");
+  }
+
+  if (/institute$/i.test(safeLabel)) {
+    return safeLabel.replace(/institute$/i, "Institutes");
+  }
+
+  if (/s$/i.test(safeLabel)) {
+    return safeLabel;
+  }
+
+  return `${safeLabel}s`;
 }
 
 function resolveGeneratedKeywords(key) {
