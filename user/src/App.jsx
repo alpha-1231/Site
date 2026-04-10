@@ -14,10 +14,10 @@ import {
 } from "./data-source";
 import {
   DEFAULT_COUNTRY,
+  DEFAULT_HOME_SEO_SECTIONS,
   DEFAULT_SITE_NAME,
   DEFAULT_SITE_ORIGIN,
   DIRECTORY_BRAND,
-  DEFAULT_HOME_SEO_SECTIONS,
   DIRECTORY_TAGLINE,
   buildBusinessPath,
   buildCanonicalPagePath,
@@ -771,7 +771,14 @@ export default function App() {
             )}
           </section>
         </main>
-
+        {!selectedBusiness ? (
+          <SeoTextBlock
+            route={activeListingRoute}
+            filters={appliedFilters}
+            filteredCount={filteredBusinessCount}
+            sections={DEFAULT_HOME_SEO_SECTIONS}
+          />
+        ) : null}
         <footer className="app-footer glass-panel">
           <div className="app-footer-main">
             <div className="app-footer-brand">
