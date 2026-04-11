@@ -35,7 +35,7 @@ import {
   parseLocationRoute,
   resolveFiltersFromRoute,
 } from "./site-seo";
-import nepalFlagLottie from "./assets/flag/Flag.lottie?url";
+import nepalFlagAnimation from "./assets/flag/animations/Nepal_Flag.json?url";
 
 const BASIC_CACHE_KEY = "edudata-user-basic-v6";
 const SAVED_CACHE_KEY = "edudata-user-saved-v1";
@@ -1651,7 +1651,7 @@ function HeaderHeroMotion() {
     <div className="directory-intro-motion" aria-hidden="true">
       <div className="intro-motion-shell">
         <DotLottieReact
-          src={nepalFlagLottie}
+          src={nepalFlagAnimation}
           loop
           autoplay
           className="intro-motion-lottie"
