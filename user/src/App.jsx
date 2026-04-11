@@ -7,6 +7,8 @@ import {
   useState,
   useTransition,
 } from "react";
+import { createPortal } from "react-dom";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import {
   fetchBusinessDetail,
   fetchBusinessDirectory,
@@ -33,6 +35,7 @@ import {
   parseLocationRoute,
   resolveFiltersFromRoute,
 } from "./site-seo";
+import nepalFlagLottie from "./assets/flag/Flag.lottie?url";
 
 const BASIC_CACHE_KEY = "edudata-user-basic-v6";
 const SAVED_CACHE_KEY = "edudata-user-saved-v1";
@@ -41,6 +44,15 @@ const RESULTS_PAGE_SIZE = 100;
 const APP_BASE_PATH = normalizeBasePath(import.meta.env.BASE_URL || "/");
 const SITE_NAME = String(import.meta.env.VITE_SITE_NAME || DEFAULT_SITE_NAME).trim() || DEFAULT_SITE_NAME;
 const SITE_ORIGIN = normalizeSiteOrigin(import.meta.env.VITE_SITE_ORIGIN || DEFAULT_SITE_ORIGIN);
+const SUPPORT_PHONE = String(import.meta.env.VITE_SUPPORT_PHONE || "").trim();
+const SUPPORT_EMAIL = String(import.meta.env.VITE_SUPPORT_EMAIL || "").trim();
+const SITE_SOCIAL_LINKS = Object.freeze({
+  youtube: String(import.meta.env.VITE_SOCIAL_YOUTUBE || "").trim(),
+  instagram: String(import.meta.env.VITE_SOCIAL_INSTAGRAM || "").trim(),
+  tiktok: String(import.meta.env.VITE_SOCIAL_TIKTOK || "").trim(),
+  twitter: String(import.meta.env.VITE_SOCIAL_TWITTER || "").trim(),
+  facebook: String(import.meta.env.VITE_SOCIAL_FACEBOOK || "").trim(),
+});
 
 export default function App() {
   const initialDirectoryCacheRef = useRef(null);
@@ -63,6 +75,11 @@ export default function App() {
   const [savedSlugs, setSavedSlugs] = useState(() => readCache(SAVED_CACHE_KEY, [], "local"));
   const [locale, setLocale] = useState(() => readPreferredLocale());
   const [selectedSlug, setSelectedSlug] = useState(() => getSelectedSlugFromLocation());
+  const [activeFooterDialog, setActiveFooterDialog] = useState("");
+  const [supportDraft, setSupportDraft] = useState({
+    subject: "",
+    message: "",
+  });
   const [selectedBusinessDetail, setSelectedBusinessDetail] = useState(null);
   const [activeVideo, setActiveVideo] = useState(null);
   const [loading, setLoading] = useState(cachedBusinesses.length === 0);
@@ -298,7 +315,7 @@ export default function App() {
     }
 
     const previousOverflow = document.body.style.overflow;
-    if (selectedSlug || activeVideo) {
+    if (selectedSlug || activeVideo || activeFooterDialog) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = previousOverflow || "";
@@ -307,7 +324,7 @@ export default function App() {
     return () => {
       document.body.style.overflow = previousOverflow || "";
     };
-  }, [selectedSlug, activeVideo]);
+  }, [selectedSlug, activeVideo, activeFooterDialog]);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -318,7 +335,7 @@ export default function App() {
   }, [locale]);
 
   useEffect(() => {
-    if (typeof document === "undefined" || (!selectedSlug && !activeVideo)) {
+    if (typeof document === "undefined" || (!selectedSlug && !activeVideo && !activeFooterDialog)) {
       return undefined;
     }
 
@@ -331,6 +348,11 @@ export default function App() {
 
         if (selectedSlug) {
           closeDetail();
+          return;
+        }
+
+        if (activeFooterDialog) {
+          setActiveFooterDialog("");
         }
       }
     }
@@ -339,7 +361,7 @@ export default function App() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedSlug, activeVideo]);
+  }, [selectedSlug, activeVideo, activeFooterDialog]);
 
   const savedSlugSet = new Set(savedSlugs);
   const businessSlugSet = new Set(businesses.map((business) => business.slug));
@@ -348,9 +370,9 @@ export default function App() {
     deferredSearch === appliedFilters.search
       ? appliedFilters
       : {
-          ...appliedFilters,
-          search: deferredSearch,
-        };
+        ...appliedFilters,
+        search: deferredSearch,
+      };
   const appliedFilterCriteria = buildFilterCriteria(displayFilters);
   const filtersAreInSync = areDirectoryFiltersEqual(filters, appliedFilters);
   const showResultsUpdateHint = !filtersAreInSync || filtersArePending;
@@ -400,8 +422,8 @@ export default function App() {
       ? t(locale, "cacheVisibleAfterSync")
       : lastSyncedAt
         ? t(locale, "basicListingsCached", {
-            time: formatSyncTimestamp(lastSyncedAt, locale),
-          })
+          time: formatSyncTimestamp(lastSyncedAt, locale),
+        })
         : `${syncStatusLabel}.`;
   const typeOptions = uniqueValues(businesses.map((business) => business.type));
   const fieldOptions = uniqueValues(businesses.flatMap((business) => business.field || []));
@@ -425,12 +447,12 @@ export default function App() {
     : buildListingRoute(appliedFilters);
   const currentSeoRoute = selectedSlug
     ? {
-        pageType: "detail",
-        selectedSlug,
-        listingKey: "",
-        listingSlug: "",
-        legacyHash: false,
-      }
+      pageType: "detail",
+      selectedSlug,
+      listingKey: "",
+      listingSlug: "",
+      legacyHash: false,
+    }
     : activeListingRoute;
   const seoBusiness = selectedBusiness || selectedBusinessSummary || null;
   const canonicalPagePath = buildCanonicalPagePath({
@@ -464,6 +486,8 @@ export default function App() {
   useEffect(() => {
     updateDocumentSeo(pageSeo, structuredData);
   }, [pageSeo, structuredData]);
+  const isHomeRoute = currentSeoRoute.pageType === "directory" && !selectedSlug;
+  const showHomeOverview = isHomeRoute && !hasActiveDirectoryFilters(filters);
   const pageContext = buildPageContext({
     locale,
     route: currentSeoRoute,
@@ -475,6 +499,17 @@ export default function App() {
     provinceCount,
     fieldCount,
   });
+  const showTopQuickBrowse =
+    currentSeoRoute.pageType !== "directory" && pageContext.browseSections.length > 0;
+  const homeQuickFilters = isHomeRoute ? buildHomeQuickFilters(businesses, locale) : [];
+  const showHomeQuickFilters = isHomeRoute && !hasActiveDirectoryFilters(filters) && homeQuickFilters.length > 0;
+  const footerDialog = activeFooterDialog
+    ? buildFooterDialogContent(activeFooterDialog, {
+      locale,
+      supportPhone: SUPPORT_PHONE,
+      supportEmail: SUPPORT_EMAIL,
+    })
+    : null;
 
   function handleSelectBusiness(slug) {
     setSelectedBusinessDetail(null);
@@ -497,11 +532,7 @@ export default function App() {
   }
 
   function handleFilterChange(key, value) {
-    const next = {
-      ...filters,
-      [key]: value,
-      ...(key === "province" ? { district: "all" } : {}),
-    };
+    const next = mergeFilterPatch(filters, { [key]: value }, businesses);
     setFilters(next);
     setResultsPage(1);
     syncListingRoute(next, { replace: key === "search" });
@@ -591,6 +622,48 @@ export default function App() {
     setActiveVideo(video);
   }
 
+  function handleHomeQuickFilterSelect(filterKey, value) {
+    const nextFilters = cloneDefaultFilters();
+    nextFilters[filterKey] = value;
+    setFilters(nextFilters);
+    setResultsPage(1);
+    syncListingRoute(nextFilters);
+    startFilterTransition(() => {
+      setAppliedFilters(nextFilters);
+    });
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(scrollToToolbar);
+    });
+  }
+
+  function handleRelatedFilterSelect(filterKey, value) {
+    const nextFilters = mergeFilterPatch(filters, { [filterKey]: value }, businesses);
+    setFilters(nextFilters);
+    setResultsPage(1);
+    syncListingRoute(nextFilters);
+    startFilterTransition(() => {
+      setAppliedFilters(nextFilters);
+    });
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(scrollToToolbar);
+    });
+  }
+
+  function handleFooterDialogOpen(dialogKey) {
+    setActiveFooterDialog(dialogKey);
+  }
+
+  function handleFooterDialogClose() {
+    setActiveFooterDialog("");
+  }
+
+  function handleSupportDraftChange(key, value) {
+    setSupportDraft((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
   return (
     <div className="app-shell">
       <div className="bg-orb bg-orb-a" />
@@ -602,10 +675,7 @@ export default function App() {
             <h1>{pageContext.title}</h1>
             <p>{pageContext.description}</p>
           </div>
-          <div className="directory-intro-pill">
-            <span>{pageContext.pillLabel}</span>
-            <strong>{pageContext.pillValue}</strong>
-          </div>
+          <HeaderHeroMotion />
         </section>
 
         <header className="topbar directory-ribbon glass-panel">
@@ -674,8 +744,8 @@ export default function App() {
                   <small>
                     {savedCount
                       ? t(locale, "savedOnThisDevice", {
-                          count: formatLocaleNumber(locale, savedCount),
-                        })
+                        count: formatLocaleNumber(locale, savedCount),
+                      })
                       : t(locale, "noSavedInstitutesYet")}
                   </small>
                 </span>
@@ -701,8 +771,8 @@ export default function App() {
               {showResultsUpdateHint
                 ? t(locale, "updatingResults")
                 : t(locale, "institutionsCount", {
-                    count: formatLocaleNumber(locale, filteredBusinessCount),
-                  })}
+                  count: formatLocaleNumber(locale, filteredBusinessCount),
+                })}
             </span>
             <span>{t(locale, "savedCount", { count: formatLocaleNumber(locale, savedCount) })}</span>
             <span>{DEFAULT_COUNTRY}</span>
@@ -766,36 +836,49 @@ export default function App() {
         {errorMessage ? <div className="status-banner">{errorMessage}</div> : null}
 
         <section className="page-context-grid">
-          <section className="page-context-panel glass-panel">
-            <div className="page-context-head">
-              <div>
-                <p className="eyebrow">{t(locale, "pageOverview")}</p>
-                <h2>{pageContext.overviewTitle}</h2>
-              </div>
-            </div>
-            <div className="page-context-copy">
-              {pageContext.overviewParagraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <div className="page-context-facts">
-              {pageContext.statItems.map((item) => (
-                <div key={`${item.label}:${item.value}`} className="page-context-fact">
-                  <span>{item.label}</span>
-                  <strong>{item.value}</strong>
+          {showHomeOverview ? (
+            <section className="page-context-panel glass-panel home-page-context">
+              <div className="page-context-head">
+                <div>
+                  <p className="eyebrow">{t(locale, "pageOverview")}</p>
+                  <h2>{pageContext.overviewTitle}</h2>
                 </div>
-              ))}
-            </div>
-          </section>
-          {pageContext.browseSections.map((section) => (
-            <BrowseSection
-              key={section.title}
-              locale={locale}
-              title={section.title}
-              description={section.description}
-              links={section.links}
-            />
-          ))}
+              </div>
+              <div className="page-context-copy">
+                {pageContext.overviewParagraphs.slice(0, 2).map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+              <div className="page-context-facts">
+                {pageContext.statItems.map((item) => (
+                  <div key={`${item.label}:${item.value}`} className="page-context-fact">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {showTopQuickBrowse ? (
+            <section className="related-filter-wrap glass-panel">
+              <div className="related-filter-wrap-head">
+                <p className="eyebrow">{t(locale, "browseQuickly")}</p>
+                <h3>{t(locale, "browseQuicklyTitle")}</h3>
+              </div>
+              <div className="related-filter-bar" role="toolbar" aria-label={t(locale, "browseQuickly")}>
+                {pageContext.browseSections.map((section) => (
+                  <RelatedFilterSection
+                    key={`${section.filterKey}:${section.title}`}
+                    locale={locale}
+                    section={section}
+                    filters={filters}
+                    onSelect={handleRelatedFilterSelect}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
         </section>
 
         <main className="content-grid">
@@ -869,6 +952,15 @@ export default function App() {
           </section>
         </main>
 
+        {showHomeQuickFilters ? (
+          <HomeQuickFilterBar
+            locale={locale}
+            items={homeQuickFilters}
+            filters={filters}
+            onSelect={handleHomeQuickFilterSelect}
+          />
+        ) : null}
+
         <footer className="app-footer glass-panel">
           <div className="app-footer-main">
             <div className="app-footer-brand">
@@ -887,58 +979,103 @@ export default function App() {
             </div>
 
             <div className="app-footer-column">
-              <span className="app-footer-heading">{t(locale, "explore")}</span>
+              <span className="app-footer-heading">{t(locale, "aboutSection")}</span>
               <div className="app-footer-links">
-                <button type="button" className="footer-link-button" onClick={handleBrowseDirectory}>
+                <button
+                  type="button"
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("about")}
+                >
                   <span className="footer-link-icon" aria-hidden="true">
-                    {renderActionIcon("institution")}
+                    {renderActionIcon("about")}
                   </span>
                   <span className="footer-link-copy">
-                    <strong>{t(locale, "browseDirectory")}</strong>
+                    <strong>{t(locale, "aboutLink")}</strong>
                   </span>
                 </button>
                 <button
                   type="button"
-                  className="footer-link-button"
-                  onClick={handleBrowseSavedInstitutes}
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("contact")}
                 >
                   <span className="footer-link-icon" aria-hidden="true">
-                    {renderActionIcon("bookmark")}
+                    {renderActionIcon("email")}
                   </span>
                   <span className="footer-link-copy">
-                    <strong>{t(locale, "savedInstitutes")}</strong>
-                  </span>
-                </button>
-                <button type="button" className="footer-link-button" onClick={resetFilters}>
-                  <span className="footer-link-icon" aria-hidden="true">
-                    {renderActionIcon("reset")}
-                  </span>
-                  <span className="footer-link-copy">
-                    <strong>{t(locale, "resetFilters")}</strong>
+                    <strong>{t(locale, "contactUsLink")}</strong>
                   </span>
                 </button>
               </div>
             </div>
 
             <div className="app-footer-column">
-              <span className="app-footer-heading">{t(locale, "coverage")}</span>
-              <div className="app-footer-metrics">
-                <div className="footer-metric">
-                  <strong>{formatLocaleNumber(locale, businesses.length)}</strong>
-                  <span>{t(locale, "activeListings")}</span>
-                </div>
-                <div className="footer-metric">
-                  <strong>{formatLocaleNumber(locale, provinceCount)}</strong>
-                  <span>{t(locale, "provincesCovered")}</span>
-                </div>
-                <div className="footer-metric">
-                  <strong>{formatLocaleNumber(locale, fieldCount)}</strong>
-                  <span>{t(locale, "fieldsRepresented")}</span>
-                </div>
-                <div className="footer-metric">
-                  <strong>{formatLocaleNumber(locale, savedCount)}</strong>
-                  <span>{t(locale, "savedOnDeviceShort")}</span>
-                </div>
+              <span className="app-footer-heading">{t(locale, "supportSection")}</span>
+              <div className="app-footer-links">
+                <button
+                  type="button"
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("support")}
+                >
+                  <span className="footer-link-icon" aria-hidden="true">
+                    {renderActionIcon("help")}
+                  </span>
+                  <span className="footer-link-copy">
+                    <strong>{t(locale, "helpFaqLink")}</strong>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("pricing")}
+                >
+                  <span className="footer-link-icon" aria-hidden="true">
+                    {renderActionIcon("pricing")}
+                  </span>
+                  <span className="footer-link-copy">
+                    <strong>{t(locale, "purchaseLink")}</strong>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="app-footer-column">
+              <span className="app-footer-heading">{t(locale, "legalSection")}</span>
+              <div className="app-footer-links">
+                <button
+                  type="button"
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("privacy")}
+                >
+                  <span className="footer-link-icon" aria-hidden="true">
+                    {renderActionIcon("shield")}
+                  </span>
+                  <span className="footer-link-copy">
+                    <strong>{t(locale, "privacyLink")}</strong>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="footer-link-button compact"
+                  onClick={() => handleFooterDialogOpen("copyright")}
+                >
+                  <span className="footer-link-icon" aria-hidden="true">
+                    {renderActionIcon("copyright")}
+                  </span>
+                  <span className="footer-link-copy">
+                    <strong>{t(locale, "copyrightLink")}</strong>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="app-footer-column">
+              <span className="app-footer-heading">{t(locale, "socialSection")}</span>
+              <div className="footer-social-links">
+                <FooterSocialLink href={SITE_SOCIAL_LINKS.youtube} label="YouTube" icon="youtube" />
+                <FooterSocialLink href={SITE_SOCIAL_LINKS.instagram} label="Instagram" icon="instagram" />
+                <FooterSocialLink href={SITE_SOCIAL_LINKS.tiktok} label="TikTok" icon="tiktok" />
+                <FooterSocialLink href={SITE_SOCIAL_LINKS.twitter} label="X" icon="twitter" />
+                <FooterSocialLink href={SITE_SOCIAL_LINKS.facebook} label="Facebook" icon="facebook" />
               </div>
             </div>
           </div>
@@ -950,6 +1087,13 @@ export default function App() {
             <span className="app-footer-country">
               <CountryFlagIcon countryName={DEFAULT_COUNTRY} className="app-footer-country-flag" />
               <span>{t(locale, "publicInstitutionDirectory")}</span>
+            </span>
+            <span>
+              {t(locale, "coverageSummary", {
+                listings: formatLocaleNumber(locale, businesses.length),
+                provinces: formatLocaleNumber(locale, provinceCount),
+                fields: formatLocaleNumber(locale, fieldCount),
+              })}
             </span>
             <span>{footerCacheLabel}</span>
           </div>
@@ -1047,8 +1191,8 @@ export default function App() {
                       label={t(locale, "programs")}
                       value={String(
                         selectedBusiness.stats?.programs_count ||
-                          selectedBusiness.programs?.length ||
-                          0
+                        selectedBusiness.programs?.length ||
+                        0
                       )}
                     />
                   </div>
@@ -1219,6 +1363,17 @@ export default function App() {
             </div>
           </div>
         ) : null}
+        {footerDialog ? (
+          <InfoDialog
+            locale={locale}
+            dialog={footerDialog}
+            supportDraft={supportDraft}
+            supportEmail={SUPPORT_EMAIL}
+            supportPhone={SUPPORT_PHONE}
+            onSupportDraftChange={handleSupportDraftChange}
+            onClose={handleFooterDialogClose}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -1336,6 +1491,349 @@ function BrowseSection({ locale, title, description, links }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function HomeQuickFilterBar({ locale, items, filters, onSelect }) {
+  const [openKey, setOpenKey] = useState("");
+
+  useEffect(() => {
+    function handlePointerDown(event) {
+      if (
+        !event.target.closest?.(".quick-filter-item") &&
+        !event.target.closest?.(".quick-filter-popup-card")
+      ) {
+        setOpenKey("");
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setOpenKey("");
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  if (!items.length) {
+    return null;
+  }
+
+  const activeItem = items.find((item) => item.key === openKey) || null;
+  const activeSelectedValue = activeItem ? filters[activeItem.key] : "all";
+  const activeSelectedOption = activeItem
+    ? activeItem.options.find((option) => option.value === activeSelectedValue) ||
+    (activeSelectedValue !== "all"
+      ? {
+        label: activeSelectedValue,
+        value: activeSelectedValue,
+      }
+      : null)
+    : null;
+
+  return (
+    <section className="home-quick-filters glass-panel">
+      <div className="home-quick-filters-head">
+        <div>
+          <p className="eyebrow">{t(locale, "browseQuickly")}</p>
+          <h3>{t(locale, "browseQuicklyTitle")}</h3>
+        </div>
+      </div>
+      <div className="quick-filter-row" role="toolbar" aria-label={t(locale, "browseQuickly")}>
+        {items.map((item) => {
+          const selectedValue = filters[item.key];
+          const selectedOption =
+            item.options.find((option) => option.value === selectedValue) ||
+            (selectedValue !== "all"
+              ? {
+                label: selectedValue,
+                value: selectedValue,
+              }
+              : null);
+          return (
+            <div key={item.key} className="quick-filter-item">
+              <button
+                type="button"
+                className={`quick-filter-trigger ${selectedValue !== "all" ? "selected" : ""}`}
+                aria-haspopup="listbox"
+                aria-expanded={openKey === item.key}
+                onClick={() => setOpenKey((current) => (current === item.key ? "" : item.key))}
+              >
+                <span className="quick-filter-trigger-copy">
+                  <strong>{item.label}</strong>
+                  <small>{selectedOption ? selectedOption.label : item.emptyLabel}</small>
+                </span>
+                <span className="quick-filter-chevron" aria-hidden="true">
+                  ▾
+                </span>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      {activeItem ? (
+        <FilterPopupDialog
+          locale={locale}
+          kicker={t(locale, "browseQuickly")}
+          title={activeItem.label}
+          summary={activeSelectedOption ? activeSelectedOption.label : activeItem.emptyLabel}
+          currentValue={activeSelectedValue}
+          emptyLabel={activeItem.emptyLabel}
+          options={activeItem.options}
+          onClose={() => setOpenKey("")}
+          onSelect={(value) => {
+            onSelect(activeItem.key, value);
+            setOpenKey("");
+          }}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function RelatedFilterSection({ locale, section, filters, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const selectedValue = filters[section.filterKey] || "all";
+  const selectedOption =
+    section.links.find((link) => link.value === selectedValue) ||
+    (selectedValue !== "all"
+      ? {
+        label: selectedValue,
+        value: selectedValue,
+      }
+      : null);
+
+  return (
+    <section className="related-filter-section">
+      <button
+        type="button"
+        className={`related-filter-trigger ${selectedOption ? "selected" : ""}`}
+        onClick={() => setOpen(true)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="quick-filter-trigger-copy">
+          <strong>{section.filterLabel}</strong>
+          <small>{selectedOption ? selectedOption.label : section.emptyLabel}</small>
+        </span>
+        <span className="quick-filter-chevron" aria-hidden="true">
+          ▾
+        </span>
+      </button>
+      {open ? (
+        <FilterPopupDialog
+          locale={locale}
+          kicker={section.title}
+          title={section.filterLabel}
+          summary={selectedOption ? selectedOption.label : section.emptyLabel}
+          currentValue={selectedValue}
+          emptyLabel={section.emptyLabel}
+          options={section.links}
+          onClose={() => setOpen(false)}
+          onSelect={(value) => {
+            onSelect(section.filterKey, value);
+            setOpen(false);
+          }}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function HeaderHeroMotion() {
+  return (
+    <div className="directory-intro-motion" aria-hidden="true">
+      <div className="intro-motion-shell">
+        <DotLottieReact
+          src={nepalFlagLottie}
+          loop
+          autoplay
+          className="intro-motion-lottie"
+        />
+      </div>
+    </div>
+  );
+}
+
+function FilterPopupDialog({
+  locale,
+  kicker,
+  title,
+  summary,
+  currentValue,
+  emptyLabel,
+  options,
+  onClose,
+  onSelect,
+}) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div className="quick-filter-popup" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="quick-filter-popup-overlay" onClick={onClose} />
+      <div className="quick-filter-popup-card glass-panel">
+        <div className="quick-filter-popup-head">
+          <div>
+            <p className="eyebrow">{kicker}</p>
+            <h4>{title}</h4>
+          </div>
+          <button
+            type="button"
+            className="quick-filter-popup-close"
+            onClick={onClose}
+            aria-label={t(locale, "close")}
+          >
+            {renderActionIcon("close")}
+          </button>
+        </div>
+        <p className="quick-filter-popup-summary">{summary}</p>
+        <div className="quick-filter-popup-list" role="listbox" aria-label={title}>
+          <button
+            type="button"
+            role="option"
+            aria-selected={currentValue === "all"}
+            className={`quick-filter-option ${currentValue === "all" ? "selected" : ""}`}
+            onClick={() => onSelect("all")}
+          >
+            <span>{emptyLabel}</span>
+          </button>
+          {options.map((option) => (
+            <button
+              key={`${title}:${option.value}`}
+              type="button"
+              role="option"
+              aria-selected={currentValue === option.value}
+              className={`quick-filter-option ${currentValue === option.value ? "selected" : ""}`}
+              onClick={() => onSelect(option.value)}
+            >
+              <span>{option.label}</span>
+              <strong>{formatLocaleNumber(locale, option.count)}</strong>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function FooterSocialLink({ href, label, icon }) {
+  if (!href) {
+    return (
+      <span className="footer-social-link disabled" aria-disabled="true" title={`${label} not configured`}>
+        {renderActionIcon(icon)}
+      </span>
+    );
+  }
+
+  return (
+    <a
+      className="footer-social-link"
+      href={normalizeActionHref(href)}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      title={label}
+    >
+      {renderActionIcon(icon)}
+    </a>
+  );
+}
+
+function InfoDialog({
+  locale,
+  dialog,
+  supportDraft,
+  supportEmail,
+  supportPhone,
+  onSupportDraftChange,
+  onClose,
+}) {
+  const supportHref = buildSupportMailtoUrl(supportEmail, supportDraft);
+
+  return (
+    <div className="info-dialog" role="dialog" aria-modal="true" aria-label={dialog.title}>
+      <div className="info-dialog-overlay" onClick={onClose} />
+      <div className="info-dialog-card glass-panel">
+        <button type="button" className="info-dialog-close" onClick={onClose} aria-label={t(locale, "close")}>
+          {renderActionIcon("close")}
+        </button>
+        <div className="info-dialog-head">
+          <p className="eyebrow">{dialog.kicker}</p>
+          <h3>{dialog.title}</h3>
+        </div>
+        <div className="info-dialog-copy">
+          {dialog.paragraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
+        {dialog.listItems.length ? (
+          <ul className="info-dialog-list">
+            {dialog.listItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        ) : null}
+        {dialog.key === "contact" ? (
+          <div className="info-dialog-actions">
+            <a
+              className={`info-dialog-action ${supportPhone ? "" : "disabled"}`}
+              href={supportPhone ? `tel:${supportPhone}` : undefined}
+              aria-disabled={!supportPhone}
+            >
+              {renderActionIcon("phone")}
+              <span>{supportPhone || t(locale, "notConfigured")}</span>
+            </a>
+            <a
+              className={`info-dialog-action ${supportEmail ? "" : "disabled"}`}
+              href={supportEmail ? `mailto:${supportEmail}` : undefined}
+              aria-disabled={!supportEmail}
+            >
+              {renderActionIcon("email")}
+              <span>{supportEmail || t(locale, "notConfigured")}</span>
+            </a>
+          </div>
+        ) : null}
+        {dialog.key === "support" ? (
+          <div className="support-form">
+            <label className="support-form-field">
+              <span>{t(locale, "supportSubject")}</span>
+              <input
+                type="text"
+                value={supportDraft.subject}
+                onChange={(event) => onSupportDraftChange("subject", event.target.value)}
+                placeholder={t(locale, "supportSubjectPlaceholder")}
+              />
+            </label>
+            <label className="support-form-field">
+              <span>{t(locale, "supportMessage")}</span>
+              <textarea
+                rows="4"
+                value={supportDraft.message}
+                onChange={(event) => onSupportDraftChange("message", event.target.value)}
+                placeholder={t(locale, "supportMessagePlaceholder")}
+              />
+            </label>
+            <a
+              className={`info-dialog-action primary ${supportHref ? "" : "disabled"}`}
+              href={supportHref || undefined}
+              aria-disabled={!supportHref}
+            >
+              {renderActionIcon("email")}
+              <span>{t(locale, "emailSupport")}</span>
+            </a>
+          </div>
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -1798,14 +2296,53 @@ function CountryFlagIcon({ countryName, className = "" }) {
 function hasActiveDirectoryFilters(filters) {
   return Boolean(
     String(filters?.search || "").trim() ||
-      filters?.type !== "all" ||
-      filters?.field !== "all" ||
-      filters?.level !== "all" ||
-      filters?.province !== "all" ||
-      filters?.district !== "all" ||
-      filters?.affiliation !== "all" ||
-      filters?.savedOnly
+    filters?.type !== "all" ||
+    filters?.field !== "all" ||
+    filters?.level !== "all" ||
+    filters?.province !== "all" ||
+    filters?.district !== "all" ||
+    filters?.affiliation !== "all" ||
+    filters?.savedOnly
   );
+}
+
+function mergeFilterPatch(currentFilters, patch, businesses) {
+  const nextFilters = {
+    ...currentFilters,
+    ...patch,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(patch, "province")) {
+    if (
+      nextFilters.province !== "all" &&
+      nextFilters.district !== "all" &&
+      !businesses.some(
+        (business) =>
+          (business.province_name || business.province) === nextFilters.province &&
+          business.district === nextFilters.district
+      )
+    ) {
+      nextFilters.district = "all";
+    }
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(patch, "district") &&
+    nextFilters.district !== "all" &&
+    nextFilters.province !== "all"
+  ) {
+    const districtExistsInProvince = businesses.some(
+      (business) =>
+        (business.province_name || business.province) === nextFilters.province &&
+        business.district === nextFilters.district
+    );
+
+    if (!districtExistsInProvince) {
+      nextFilters.province = "all";
+    }
+  }
+
+  return nextFilters;
 }
 
 function getSelectedSlugFromLocation() {
@@ -1888,6 +2425,7 @@ function buildBrowseLinkGroups(businesses, routeKey, getValue, limit, locale = "
     .slice(0, limit)
     .map(([label, count]) => ({
       label,
+      value: label,
       count,
       href: buildCollectionPath(routeKey, label, APP_BASE_PATH),
       description: buildBrowseLinkDescription(locale, routeKey, label, count),
@@ -2007,8 +2545,65 @@ function buildHomePageContext({ locale, allBusinesses, totalBusinessCount, provi
             : "Field pages help users focus on one study area at a time.",
         links: buildBrowseLinkGroups(allBusinesses, "field", (business) => business.field || [], 6, locale),
       },
-    ].filter((section) => section.links.length),
+    ].filter((section) => section?.links?.length),
   };
+}
+
+function buildHomeQuickFilters(businesses, locale) {
+  return [
+    {
+      key: "province",
+      label: t(locale, "province"),
+      emptyLabel: t(locale, "allProvinces"),
+      options: buildQuickFilterOptions(
+        businesses,
+        (business) => business.province_name || business.province
+      ),
+    },
+    {
+      key: "district",
+      label: t(locale, "district"),
+      emptyLabel: t(locale, "allDistricts"),
+      options: buildQuickFilterOptions(businesses, (business) => business.district),
+    },
+    {
+      key: "type",
+      label: t(locale, "type"),
+      emptyLabel: t(locale, "allTypes"),
+      options: buildQuickFilterOptions(businesses, (business) => business.type),
+    },
+    {
+      key: "field",
+      label: t(locale, "field"),
+      emptyLabel: t(locale, "allFields"),
+      options: buildQuickFilterOptions(businesses, (business) => business.field || []),
+    },
+  ].filter((item) => item.options.length);
+}
+
+function buildQuickFilterOptions(businesses, getValue, limit = 12) {
+  const counts = new Map();
+
+  for (const business of businesses) {
+    const resolved = getValue(business);
+    const values = Array.isArray(resolved) ? resolved : [resolved];
+    for (const value of values) {
+      const label = String(value || "").trim();
+      if (!label) {
+        continue;
+      }
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+  }
+
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, limit)
+    .map(([label, count]) => ({
+      label,
+      value: label,
+      count,
+    }));
 }
 
 function buildCollectionPageContext({
@@ -2115,31 +2710,48 @@ function buildDetailPageContext({ locale, route, selectedBusiness, allBusinesses
       },
     ],
     browseSections: [
-      {
-        title: locale === "ne" ? "यस्तै पेजहरू" : "Continue exploring",
-        description:
-          locale === "ne"
-            ? "यस संस्थासँग सम्बन्धित जिल्ला वा प्रकार पेजमा फर्किन सकिन्छ।"
-            : "Jump back into the broader directory from this profile.",
-        links: [
-          business.district
-            ? {
-                label: business.district,
-                count: districtCount,
-                href: buildCollectionPath("district", business.district, APP_BASE_PATH),
-                description: buildBrowseLinkDescription(locale, "district", business.district, districtCount),
-              }
-            : null,
-          business.type
-            ? {
-                label: business.type,
-                count: typeCount,
-                href: buildCollectionPath("type", business.type, APP_BASE_PATH),
-                description: buildBrowseLinkDescription(locale, "type", business.type, typeCount),
-              }
-            : null,
-        ].filter(Boolean),
-      },
+      business.district
+        ? {
+          title: locale === "ne" ? "यस संस्थाको जिल्ला" : "Explore this district",
+          description:
+            locale === "ne"
+              ? "यही जिल्लाभित्रका थप संस्थाहरू फिल्टर गरेर हेर्नुहोस्।"
+              : "Apply this district to the directory filters and keep exploring nearby listings.",
+          filterKey: "district",
+          filterLabel: t(locale, "district"),
+          emptyLabel: t(locale, "allDistricts"),
+          links: [
+            {
+              label: business.district,
+              value: business.district,
+              count: districtCount,
+              href: buildCollectionPath("district", business.district, APP_BASE_PATH),
+              description: buildBrowseLinkDescription(locale, "district", business.district, districtCount),
+            },
+          ],
+        }
+        : null,
+      business.type
+        ? {
+          title: locale === "ne" ? "यस संस्थाको प्रकार" : "Explore this type",
+          description:
+            locale === "ne"
+              ? "यही प्रकारका थप संस्थाहरू राखेर फिल्टर अगाडि बढाउनुहोस्।"
+              : "Keep the current directory flow and add this institute type into the active filters.",
+          filterKey: "type",
+          filterLabel: t(locale, "type"),
+          emptyLabel: t(locale, "allTypes"),
+          links: [
+            {
+              label: business.type,
+              value: business.type,
+              count: typeCount,
+              href: buildCollectionPath("type", business.type, APP_BASE_PATH),
+              description: buildBrowseLinkDescription(locale, "type", business.type, typeCount),
+            },
+          ],
+        }
+        : null,
     ].filter((section) => section.links.length),
   };
 }
@@ -2232,9 +2844,169 @@ function buildCollectionBrowseSections(locale, routeKey, businesses) {
     .map((section) => ({
       title: section.title,
       description: section.description,
+      filterKey: section.key,
+      filterLabel: buildFilterLabel(locale, section.key),
+      emptyLabel: buildFilterEmptyLabel(locale, section.key),
       links: buildBrowseLinkGroups(businesses, section.key, section.getValue, 6, locale),
     }))
     .filter((section) => section.links.length);
+}
+
+function buildFilterLabel(locale, key) {
+  const labelMap = {
+    type: t(locale, "type"),
+    field: t(locale, "field"),
+    level: t(locale, "level"),
+    province: t(locale, "province"),
+    district: t(locale, "district"),
+    affiliation: t(locale, "affiliation"),
+  };
+
+  return labelMap[key] || humanizeRouteSlug(key);
+}
+
+function buildFilterEmptyLabel(locale, key) {
+  const labelMap = {
+    type: t(locale, "allTypes"),
+    field: t(locale, "allFields"),
+    level: t(locale, "allLevels"),
+    province: t(locale, "allProvinces"),
+    district: t(locale, "allDistricts"),
+    affiliation: t(locale, "allAffiliations"),
+  };
+
+  return labelMap[key] || (locale === "ne" ? "सबै" : "All");
+}
+
+function buildFooterDialogContent(key, { locale, supportPhone, supportEmail }) {
+  const dialogs = {
+    about: {
+      kicker: t(locale, "aboutSection"),
+      title: t(locale, "aboutLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "AboutMySchool नेपालभरिका सार्वजनिक शैक्षिक संस्थाहरू सजिलै खोज्न, तुलना गर्न र सम्पर्क गर्न बनाइएको निर्देशिका हो।",
+            "यो प्लेटफर्मले संस्था प्रोफाइल, स्थान, सम्पर्क, कार्यक्रम, सुविधा, फोटो र भिडियोहरूलाई एउटै स्थानमा राखेर अभिभावक र विद्यार्थीलाई निर्णय गर्न सजिलो बनाउँछ।",
+          ]
+          : [
+            "AboutMySchool is built to help families and students discover, compare, and contact public educational institutions across Nepal.",
+            "The platform brings institution profiles, location details, contacts, programs, facilities, photos, and videos into one searchable place.",
+          ],
+      listItems: [],
+    },
+    contact: {
+      kicker: t(locale, "contact"),
+      title: t(locale, "contactUsLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "प्रत्यक्ष सम्पर्कका लागि तलका फोन वा इमेल कार्यहरू प्रयोग गर्नुहोस्।",
+            supportPhone || supportEmail
+              ? "तपाईंको डिभाइसमा उपलब्ध कल वा इमेल एपबाट सिधै सम्पर्क गर्न सकिन्छ।"
+              : "सम्पर्क जानकारी अझै कन्फिगर गरिएको छैन।",
+          ]
+          : [
+            "Use the phone or email actions below to contact the AboutMySchool team directly.",
+            supportPhone || supportEmail
+              ? "The buttons open your device's calling or email app."
+              : "Support contact details are not configured yet.",
+          ],
+      listItems: [],
+    },
+    support: {
+      kicker: t(locale, "supportSection"),
+      title: t(locale, "helpFaqLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "सामान्य प्रश्न, सूची अद्यावधिक, मूल्य, वा प्राविधिक सहयोगका लागि यो सपोर्ट प्यानल प्रयोग गर्नुहोस्।",
+            "तल विषय र सन्देश लेखेर इमेल समर्थन बटन थिच्दा तपाईँको डिफल्ट मेल एप खुल्छ।",
+          ]
+          : [
+            "Use this support panel for common questions, listing updates, pricing questions, or technical help.",
+            "Write a subject and message below, then use the email support action to open your default mail app.",
+          ],
+      listItems:
+        locale === "ne"
+          ? [
+            "प्रायः सोधिने प्रश्न: सूची कसरी थप्ने, अपडेट कहिले देखिन्छ, मूल्य योजना कसरी काम गर्छ।",
+          ]
+          : [
+            "Common questions: how listings are added, when updates go live, and how pricing plans work.",
+          ],
+    },
+    pricing: {
+      kicker: t(locale, "supportSection"),
+      title: t(locale, "purchaseLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "यो प्यानल हालका लागि मूल्य र खरिदसम्बन्धी छोटो जानकारी देखाउन राखिएको छ।",
+            "अहिलेलाई वास्तविक भुक्तानी पेज छैन, तर पछि योजना, सुविधा र खरिद बटन यहीँ वा अलग पेजमा जोड्न सकिन्छ।",
+          ]
+          : [
+            "This panel is currently a placeholder for pricing and purchase information.",
+            "There is no live payment flow yet, but plans, features, and purchase actions can be connected here or on a dedicated pricing page later.",
+          ],
+      listItems: [],
+    },
+    privacy: {
+      kicker: t(locale, "legalSection"),
+      title: t(locale, "privacyLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "यो साइटले सार्वजनिक संस्था विवरण देखाउँछ र डाइरेक्टरी प्रयोग सुधार गर्न आवश्यक न्यूनतम स्थानीय डेटा मात्र प्रयोग गर्छ।",
+            "भविष्यमा औपचारिक प्राइभेसी नीतिमा डेटा स्रोत, क्यास, कुकी, र सम्पर्क फारम प्रयोगबारे स्पष्ट विवरण थप्न सकिन्छ।",
+          ]
+          : [
+            "This site shows public institution data and uses only the minimum local device data needed to improve directory browsing.",
+            "A formal privacy policy can later expand this into clear sections for data sources, caching, cookies, and contact form handling.",
+          ],
+      listItems: [],
+    },
+    copyright: {
+      kicker: t(locale, "legalSection"),
+      title: t(locale, "copyrightLink"),
+      paragraphs:
+        locale === "ne"
+          ? [
+            "साइटको संरचना, पाठ, डिजाइन, र ब्रान्ड सामग्री AboutMySchool वा सम्बन्धित अधिकारधनीको स्वामित्वमा रहन्छ।",
+            "संस्थाहरूले उपलब्ध गराएका सार्वजनिक लोगो, फोटो वा सामग्री सम्बन्धित संस्थाको स्वामित्वमा रहन सक्छन्।",
+          ]
+          : [
+            "The site structure, written copy, design, and brand material remain the property of AboutMySchool or the relevant rights holder.",
+            "Public logos, photos, and materials supplied by institutions may remain the property of those institutions.",
+          ],
+      listItems: [],
+    },
+  };
+
+  return {
+    key,
+    ...(dialogs[key] || dialogs.about),
+    supportPhone,
+    supportEmail,
+  };
+}
+
+function buildSupportMailtoUrl(email, draft) {
+  const safeEmail = String(email || "").trim();
+  if (!safeEmail) {
+    return "";
+  }
+
+  const params = new URLSearchParams();
+  if (draft?.subject) {
+    params.set("subject", draft.subject);
+  }
+  if (draft?.message) {
+    params.set("body", draft.message);
+  }
+
+  const query = params.toString();
+  return `mailto:${safeEmail}${query ? `?${query}` : ""}`;
 }
 
 function buildBrowseLinkDescription(locale, routeKey, label, count) {
@@ -2711,6 +3483,19 @@ const UI_TEXT = Object.freeze({
     noSavedResultsBody: "Use the bookmark buttons to save institutes locally, then they will appear here.",
     noResultsBody: "Try clearing one or two filters, or search with a district, level, or field.",
     footerNote: "Search, save, and compare published institutions faster.",
+    aboutSection: "About",
+    aboutLink: "About",
+    contactUsLink: "Contact us",
+    supportSection: "Support",
+    helpFaqLink: "Help / FAQ",
+    purchaseLink: "Purchase / Pricing",
+    legalSection: "Legal",
+    privacyLink: "Privacy",
+    copyrightLink: "Copyright",
+    socialSection: "Social",
+    coverageSummary: "{listings} listings • {provinces} provinces • {fields} fields",
+    browseQuickly: "Browse quickly",
+    browseQuicklyTitle: "Quick filters for the home page",
     explore: "Explore",
     browseDirectory: "Browse directory",
     coverage: "Coverage",
@@ -2752,6 +3537,7 @@ const UI_TEXT = Object.freeze({
     call: "Call",
     open: "Open",
     openSource: "Open source",
+    close: "Close",
     videoPopupUnavailable: "This video source cannot be played inside the popup.",
     coordinates: "Coordinates",
     coverageLabel: "Coverage",
@@ -2768,6 +3554,12 @@ const UI_TEXT = Object.freeze({
     removeFromSaved: "Remove {name} from saved",
     saveBusiness: "Save {name}",
     physicallyCertified: "Physically certified",
+    supportSubject: "Subject",
+    supportSubjectPlaceholder: "How can we help?",
+    supportMessage: "Message",
+    supportMessagePlaceholder: "Write your question or request here.",
+    emailSupport: "Email support",
+    notConfigured: "Not configured",
     listings: "Listings",
     types: "Types",
     pagesCount: "{count} pages",
@@ -2825,6 +3617,19 @@ const UI_TEXT = Object.freeze({
     noSavedResultsBody: "बुकमार्क बटन प्रयोग गरेर संस्था सुरक्षित गर्नुहोस्, त्यसपछि यहाँ देखिनेछ।",
     noResultsBody: "एक वा दुई फिल्टर हटाउनुहोस्, वा जिल्ला, तह वा विषयक्षेत्रबाट खोज्नुहोस्।",
     footerNote: "प्रकाशित संस्थाहरू छिटो खोज्न, सुरक्षित गर्न र तुलना गर्न मद्दत गर्दछ।",
+    aboutSection: "हाम्रो बारेमा",
+    aboutLink: "हाम्रो बारेमा",
+    contactUsLink: "सम्पर्क गर्नुहोस्",
+    supportSection: "सहयोग",
+    helpFaqLink: "सहायता / FAQ",
+    purchaseLink: "खरिद / मूल्य",
+    legalSection: "कानुनी",
+    privacyLink: "गोपनीयता",
+    copyrightLink: "कपिराइट",
+    socialSection: "सामाजिक",
+    coverageSummary: "{listings} सूची • {provinces} प्रदेश • {fields} विषयक्षेत्र",
+    browseQuickly: "छिटो हेर्नुहोस्",
+    browseQuicklyTitle: "होम पेजका द्रुत फिल्टरहरू",
     explore: "अन्वेषण",
     browseDirectory: "डाइरेक्टरी हेर्नुहोस्",
     coverage: "समेटिएको क्षेत्र",
@@ -2866,6 +3671,7 @@ const UI_TEXT = Object.freeze({
     call: "कल",
     open: "खोल्नुहोस्",
     openSource: "स्रोत खोल्नुहोस्",
+    close: "बन्द गर्नुहोस्",
     videoPopupUnavailable: "यो भिडियो पपअपभित्र चलाउन सकिँदैन।",
     coordinates: "निर्देशांक",
     coverageLabel: "कभरेज",
@@ -2882,6 +3688,12 @@ const UI_TEXT = Object.freeze({
     removeFromSaved: "{name} सुरक्षित सूचीबाट हटाउनुहोस्",
     saveBusiness: "{name} सुरक्षित गर्नुहोस्",
     physicallyCertified: "भौतिक रूपमा प्रमाणित",
+    supportSubject: "विषय",
+    supportSubjectPlaceholder: "हामी कसरी सहयोग गर्न सक्छौं?",
+    supportMessage: "सन्देश",
+    supportMessagePlaceholder: "आफ्नो प्रश्न वा अनुरोध यहाँ लेख्नुहोस्।",
+    emailSupport: "इमेल समर्थन",
+    notConfigured: "कन्फिगर गरिएको छैन",
     listings: "सूचीहरू",
     types: "प्रकारहरू",
     pagesCount: "{count} पेज",
@@ -3262,10 +4074,48 @@ function renderActionIcon(icon) {
           <path d="M19 10v4.5" />
         </svg>
       );
+    case "about":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 10v6" />
+          <path d="M12 7.5h.01" />
+        </svg>
+      );
     case "phone":
       return (
         <svg {...common}>
           <path d="M6.8 4.5h3.1l1.2 3.2-1.8 1.9a14.8 14.8 0 0 0 5.1 5.1l1.9-1.8 3.2 1.2v3.1c0 .9-.7 1.6-1.6 1.6A15.1 15.1 0 0 1 5.2 6.1c0-.9.7-1.6 1.6-1.6Z" />
+        </svg>
+      );
+    case "help":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.5 9.5a2.5 2.5 0 1 1 4 2c-.9.6-1.5 1.2-1.5 2.5" />
+          <path d="M12 17h.01" />
+        </svg>
+      );
+    case "pricing":
+      return (
+        <svg {...common}>
+          <path d="M6 7h12" />
+          <path d="M8 7V5.8A1.8 1.8 0 0 1 9.8 4h4.4A1.8 1.8 0 0 1 16 5.8V7" />
+          <rect x="4" y="7" width="16" height="13" rx="2" />
+          <path d="M8 12h8" />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg {...common}>
+          <path d="M12 3 5 6v5c0 4.4 2.8 8.4 7 10 4.2-1.6 7-5.6 7-10V6l-7-3Z" />
+        </svg>
+      );
+    case "copyright":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M15 9.5a4 4 0 1 0 0 5" />
         </svg>
       );
     case "reset":
@@ -3355,6 +4205,13 @@ function renderActionIcon(icon) {
         <svg {...common}>
           <path d="M4 4 20 20" />
           <path d="M20 4 4 20" />
+        </svg>
+      );
+    case "tiktok":
+      return (
+        <svg {...common}>
+          <path d="M14 5v8.2a3.2 3.2 0 1 1-2.6-3.1" />
+          <path d="M14 5c1 .9 2.2 1.5 3.6 1.6" />
         </svg>
       );
     default:
