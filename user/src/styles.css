@@ -4384,3 +4384,11 @@ a {
     font-size: 0.5rem;
   }
 }
+
+.app-footer-mark-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 0.8rem;
+}

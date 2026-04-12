@@ -7,14 +7,14 @@ import {
 
 export const DEFAULT_COUNTRY = "Nepal";
 export const DEFAULT_COUNTRY_ROUTE = "nepal";
-export const DEFAULT_SITE_NAME = "AboutMySchool";
+export const DEFAULT_SITE_NAME = "About My School";
 export const DEFAULT_SITE_ORIGIN = "https://www.aboutmyschool.com";
-export const DIRECTORY_BRAND = DEFAULT_SITE_NAME;
+export const DIRECTORY_BRAND = "About My School";
 export const DIRECTORY_TAGLINE = "Nepal's educational directory";
 const FALLBACK_SITE_DESCRIPTION =
-  "AboutMySchool is Nepal's educational directory for schools, colleges, universities, technical institutes, and training centers with searchable profiles, affiliations, facilities, maps, photos, videos, and contact details.";
+  "About My School is Nepal's educational directory for schools, colleges, universities, technical institutes, and training centers with searchable profiles, affiliations, facilities, maps, photos, videos, and contact details.";
 const FALLBACK_SITE_KEYWORDS = Object.freeze([
-  "AboutMySchool Nepal",
+  "About My School Nepal",
   "Nepal school directory",
   "Nepal college directory",
   "Nepal university directory",

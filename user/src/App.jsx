@@ -966,7 +966,7 @@ export default function App() {
             <div className="app-footer-brand">
               <div className="app-footer-brand-row">
                 <div className="app-footer-mark" aria-hidden="true">
-                  {renderActionIcon("institution")}
+                  <img src="./logo/azaseros_logo.png" alt="About My School Logo" className="app-footer-mark-image" />
                 </div>
                 <div className="app-footer-copy">
                   <strong>{DIRECTORY_BRAND}</strong>
