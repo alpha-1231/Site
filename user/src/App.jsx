@@ -36,6 +36,7 @@ import {
   resolveFiltersFromRoute,
 } from "./site-seo";
 import nepalFlagAnimation from "./assets/flag/animations/Nepal_Flag.json?url";
+import footerLogo from "../logo/azaseros_logo.png";
 
 const BASIC_CACHE_KEY = "edudata-user-basic-v6";
 const SAVED_CACHE_KEY = "edudata-user-saved-v1";
@@ -966,7 +967,7 @@ export default function App() {
             <div className="app-footer-brand">
               <div className="app-footer-brand-row">
                 <div className="app-footer-mark" aria-hidden="true">
-                  <img src="./logo/azaseros_logo.png" alt="About My School Logo" className="app-footer-mark-image" />
+                  <img src={footerLogo} alt="About My School Logo" className="app-footer-mark-image" />
                 </div>
                 <div className="app-footer-copy">
                   <strong>{DIRECTORY_BRAND}</strong>
