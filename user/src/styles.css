@@ -148,11 +148,12 @@ a {
 }
 
 .directory-intro {
+  position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 1rem;
   margin-top: 0.2rem;
-  padding: 1rem 1.05rem;
+  padding: 1rem 8rem 1rem 1.05rem;
   border-radius: var(--radius-xl);
 }
 
@@ -203,19 +204,24 @@ a {
 }
 
 .directory-intro-motion {
-  margin-left: auto;
-  flex: 0 0 min(19rem, 32vw);
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: clamp(4.8rem, 8vw, 7rem);
+  height: clamp(4.8rem, 8vw, 7rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100%;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .intro-motion-shell {
   position: relative;
-  width: min(19rem, 100%);
-  min-height: 100%;
-  border-radius: 1.4rem;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 1.1rem;
   background:
     radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.72), transparent 32%),
     linear-gradient(145deg, rgba(226, 237, 255, 0.82), rgba(255, 255, 255, 0.54));
@@ -237,18 +243,18 @@ a {
 }
 
 .intro-motion-shell::before {
-  width: 7rem;
-  height: 7rem;
-  top: -2rem;
-  right: -1.4rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  top: -0.8rem;
+  right: -0.5rem;
   background: rgba(107, 189, 255, 0.24);
 }
 
 .intro-motion-shell::after {
-  width: 5.6rem;
-  height: 5.6rem;
-  bottom: -1.4rem;
-  left: -1rem;
+  width: 2.3rem;
+  height: 2.3rem;
+  bottom: -0.6rem;
+  left: -0.4rem;
   background: rgba(255, 199, 145, 0.24);
 }
 
@@ -257,7 +263,6 @@ a {
   z-index: 1;
   width: 100%;
   height: 100%;
-  min-height: 11rem;
 }
 
 .topbar {
@@ -2964,14 +2969,7 @@ a {
 
 @media (max-width: 938px) {
   .directory-intro {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .directory-intro-motion {
-    margin-left: 0;
-    flex: 1 1 100%;
-    min-height: 8.4rem;
+    padding-right: 6.8rem;
   }
 
   .topbar {
@@ -3170,6 +3168,7 @@ a {
   .directory-intro {
     gap: 0.75rem;
     margin-top: 0.35rem;
+    padding-right: 5.6rem;
   }
 
   .directory-logo-mark {
@@ -3194,11 +3193,14 @@ a {
   }
 
   .directory-intro-motion {
-    min-height: 6.8rem;
+    top: 50%;
+    right: 0.82rem;
+    width: 4.2rem;
+    height: 4.2rem;
   }
 
   .intro-motion-shell {
-    width: min(100%, 15rem);
+    border-radius: 0.9rem;
   }
 
   .topbar {
